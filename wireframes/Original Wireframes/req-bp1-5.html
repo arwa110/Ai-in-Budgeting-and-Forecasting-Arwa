@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>REQ-BP1-5 — Data Quality (RPA)</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: #F3F4F6; color: #111827; font-size: 14px; }
+
+.story-bar { position: fixed; top: 0; left: 0; right: 0; background: #1F2937; color: #F9FAFB; padding: 10px 24px; z-index: 100; display: flex; align-items: center; gap: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+.story-bar h1 { font-size: 14px; font-weight: 600; }
+.story-bar .req-id { background: #3B82F6; padding: 4px 10px; border-radius: 4px; font-size: 12px; font-weight: 600; }
+.toggle-group { display: flex; background: #374151; border-radius: 6px; padding: 2px; margin-left: auto; }
+.toggle-btn { background: transparent; color: #D1D5DB; border: none; padding: 6px 16px; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: 500; }
+.toggle-btn.active { background: #3B82F6; color: white; }
+
+.app { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; padding-top: 56px; }
+
+.sidebar { background: white; border-right: 1px solid #E5E7EB; padding: 24px 0; height: calc(100vh - 56px); position: sticky; top: 56px; overflow-y: auto; }
+.brand { padding: 0 24px 24px; font-size: 18px; font-weight: 700; color: #111827; line-height: 1.3; border-bottom: 1px solid #F3F4F6; margin-bottom: 12px; }
+.nav-item { display: flex; align-items: center; gap: 12px; padding: 10px 24px; color: #6B7280; font-size: 14px; font-weight: 500; border-left: 3px solid transparent; cursor: pointer; }
+.nav-item:hover { background: #F9FAFB; }
+.nav-item.active { background: #EFF6FF; color: #3B82F6; border-left-color: #3B82F6; }
+.nav-icon { width: 18px; flex-shrink: 0; font-size: 16px; }
+
+.main { display: flex; flex-direction: column; background: #F9FAFB; }
+.header { background: white; border-bottom: 1px solid #E5E7EB; padding: 16px 32px; display: flex; justify-content: space-between; align-items: center; }
+.header-left h2 { font-size: 18px; font-weight: 600; color: #111827; }
+.header-left p { font-size: 13px; color: #6B7280; margin-top: 2px; }
+.header-right { display: flex; align-items: center; gap: 16px; }
+.bell { width: 20px; height: 20px; color: #6B7280; position: relative; cursor: pointer; }
+.bell::after { content: ''; position: absolute; top: 0; right: 0; width: 8px; height: 8px; background: #3B82F6; border-radius: 50%; border: 2px solid white; }
+.user-chip { display: flex; align-items: center; gap: 10px; }
+.avatar { width: 36px; height: 36px; border-radius: 50%; background: #DBEAFE; color: #3B82F6; display: flex; align-items: center; justify-content: center; font-weight: 600; }
+.user-name { font-weight: 600; font-size: 14px; }
+.user-role { font-size: 12px; color: #6B7280; }
+.content { padding: 32px; flex: 1; }
+
+.banner { background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 8px; padding: 14px 18px; display: flex; gap: 12px; align-items: flex-start; margin-bottom: 24px; color: #1E40AF; font-size: 14px; }
+.banner-icon { flex-shrink: 0; font-weight: bold; }
+
+.card { background: white; border: 1px solid #E5E7EB; border-radius: 8px; padding: 24px; margin-bottom: 20px; }
+.card-title { font-size: 16px; font-weight: 600; margin-bottom: 16px; color: #111827; display: flex; align-items: center; gap: 8px; }
+
+.field { margin-bottom: 20px; }
+.label { display: block; font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 6px; }
+.req { color: #EF4444; }
+.input, .select, .textarea { width: 100%; padding: 10px 12px; border: 1px solid #D1D5DB; border-radius: 6px; font-size: 14px; font-family: inherit; background: white; }
+.input:focus, .select:focus, .textarea:focus { outline: none; border-color: #3B82F6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+.textarea { resize: vertical; min-height: 80px; }
+.help { font-size: 12px; color: #6B7280; margin-top: 4px; }
+
+.tag-input { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px; border: 1px solid #D1D5DB; border-radius: 6px; min-height: 42px; align-items: center; }
+.tag { background: #DBEAFE; color: #1E40AF; padding: 4px 10px; border-radius: 4px; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; }
+.tag-x { cursor: pointer; opacity: 0.6; }
+
+.radio-card { border: 2px solid #E5E7EB; border-radius: 8px; padding: 14px 16px; cursor: pointer; margin-bottom: 8px; transition: all 0.15s; }
+.radio-card:hover { border-color: #93C5FD; }
+.radio-card.selected { border-color: #3B82F6; background: #EFF6FF; }
+.radio-card-title { font-weight: 600; font-size: 14px; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; justify-content: space-between; }
+.radio-card-desc { font-size: 12px; color: #6B7280; }
+
+.btn { padding: 10px 20px; border-radius: 6px; font-size: 14px; font-weight: 500; cursor: pointer; border: none; font-family: inherit; }
+.btn-primary { background: #3B82F6; color: white; }
+.btn-primary:hover { background: #2563EB; }
+.btn-secondary { background: white; color: #374151; border: 1px solid #D1D5DB; }
+.btn-secondary:hover { background: #F9FAFB; }
+.btn-danger { background: white; color: #EF4444; border: 1px solid #FCA5A5; }
+.btn-success { background: #10B981; color: white; }
+.btn-warning { background: #F59E0B; color: white; }
+.btn-text { background: transparent; color: #3B82F6; padding: 10px 12px; }
+.btn-disabled { background: #E5E7EB; color: #9CA3AF; cursor: not-allowed; }
+
+.actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px; padding-top: 20px; border-top: 1px solid #E5E7EB; }
+
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+.grid-2-3 { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+
+.kpi { background: white; border: 1px solid #E5E7EB; border-radius: 8px; padding: 18px; }
+.kpi-label { font-size: 12px; color: #6B7280; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
+.kpi-value { font-size: 24px; font-weight: 700; color: #111827; margin-top: 6px; }
+.kpi-trend { font-size: 12px; margin-top: 4px; color: #6B7280; }
+.kpi-trend.up { color: #10B981; }
+.kpi-trend.down { color: #EF4444; }
+
+.pill { display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 500; }
+.pill-success { background: #D1FAE5; color: #065F46; }
+.pill-warning { background: #FEF3C7; color: #92400E; }
+.pill-danger { background: #FEE2E2; color: #991B1B; }
+.pill-info { background: #DBEAFE; color: #1E40AF; }
+.pill-neutral { background: #F3F4F6; color: #4B5563; }
+
+.subtle { color: #6B7280; font-size: 13px; }
+.summary-row { padding: 10px 0; }
+.summary-label { font-size: 12px; color: #6B7280; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 500; }
+.summary-value { font-size: 14px; font-weight: 500; color: #111827; margin-top: 2px; }
+
+.muted-card { background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 8px; padding: 16px; }
+
+.toggle { position: relative; width: 40px; height: 22px; background: #D1D5DB; border-radius: 11px; cursor: pointer; transition: background 0.2s; }
+.toggle.on { background: #3B82F6; }
+.toggle::after { content: ''; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; background: white; border-radius: 50%; transition: transform 0.2s; }
+.toggle.on::after { transform: translateX(18px); }
+.toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; }
+
+.slider-row { display: flex; align-items: center; gap: 12px; }
+.slider-row input[type=range] { flex: 1; }
+.slider-value { font-weight: 600; min-width: 60px; text-align: right; }
+
+.checkbox-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; font-size: 14px; }
+.checkbox-row input { width: 16px; height: 16px; cursor: pointer; }
+
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { text-align: left; padding: 10px 12px; background: #F9FAFB; color: #6B7280; font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #E5E7EB; }
+td { padding: 12px; border-bottom: 1px solid #F3F4F6; color: #111827; }
+tbody tr:hover { background: #F9FAFB; }
+
+.chart { background: linear-gradient(180deg, #F9FAFB 0%, white 100%); border: 1px dashed #D1D5DB; border-radius: 6px; padding: 16px; min-height: 240px; display: flex; align-items: center; justify-content: center; position: relative; }
+.chart svg { width: 100%; height: 100%; }
+
+.ai-card { background: linear-gradient(135deg, #EFF6FF 0%, #F0F9FF 100%); border: 1px solid #BFDBFE; border-radius: 8px; padding: 20px; margin-bottom: 20px; }
+.ai-icon { display: inline-flex; width: 24px; height: 24px; background: #3B82F6; color: white; border-radius: 6px; align-items: center; justify-content: center; font-size: 14px; margin-right: 8px; vertical-align: middle; }
+
+.bar-row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; font-size: 13px; }
+.bar-label { min-width: 130px; }
+.bar-track { flex: 1; height: 22px; background: #F3F4F6; border-radius: 4px; overflow: hidden; }
+.bar-fill { height: 100%; background: #3B82F6; display: flex; align-items: center; padding: 0 8px; color: white; font-size: 11px; font-weight: 600; }
+.bar-value { min-width: 60px; text-align: right; font-weight: 600; }
+
+.cluster-card { border-top: 4px solid #3B82F6; background: white; border: 1px solid #E5E7EB; border-radius: 8px; padding: 16px; }
+.cluster-card.c1 { border-top: 4px solid #3B82F6; }
+.cluster-card.c2 { border-top: 4px solid #10B981; }
+.cluster-card.c3 { border-top: 4px solid #F59E0B; }
+.cluster-card.c4 { border-top: 4px solid #EF4444; }
+
+.callout { display: flex; gap: 12px; padding: 14px 16px; background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 8px; margin-bottom: 8px; }
+.callout-icon { width: 32px; height: 32px; background: #F59E0B; color: white; border-radius: 6px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 16px; }
+
+.timeline-item { display: flex; gap: 12px; padding: 10px 0; }
+.timeline-dot { width: 10px; height: 10px; border-radius: 50%; margin-top: 6px; flex-shrink: 0; }
+.timeline-title { font-size: 14px; font-weight: 500; color: #111827; }
+.timeline-meta { font-size: 12px; color: #6B7280; margin-top: 2px; }
+
+.legend { display: flex; gap: 16px; font-size: 12px; color: #6B7280; flex-wrap: wrap; }
+.legend-item { display: flex; align-items: center; gap: 6px; }
+.legend-dot { width: 10px; height: 10px; border-radius: 2px; }
+
+.gauge { width: 90px; height: 90px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 12px auto 4px; }
+.gauge-inner { width: 70px; height: 70px; background: white; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.gauge-value { font-size: 18px; font-weight: 700; color: #111827; }
+.gauge-label { font-size: 11px; color: #6B7280; }
+
+.heatmap-grid { display: grid; gap: 2px; }
+.heatmap-cell { aspect-ratio: 1; border-radius: 2px; }
+
+.breadcrumb { font-size: 13px; color: #6B7280; margin-bottom: 8px; }
+.breadcrumb a { color: #3B82F6; text-decoration: none; }
+
+.fab { position: fixed; bottom: 24px; right: 24px; background: #3B82F6; color: white; padding: 14px 20px; border-radius: 999px; font-size: 14px; font-weight: 500; cursor: pointer; box-shadow: 0 4px 12px rgba(59,130,246,0.4); display: flex; align-items: center; gap: 8px; }
+
+.screen { display: none; }
+.screen.active { display: block; }
+</style>
+</head>
+<body>
+
+<div class="story-bar">
+  <span class="req-id">REQ-BP1-5</span>
+  <h1>Data Quality (RPA)</h1>
+  <div class="toggle-group">
+    <button class="toggle-btn active" data-mode="input">📝 Input Screen</button>
+    <button class="toggle-btn" data-mode="output">📊 Output Screen</button>
+  </div>
+</div>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">AI Budget &amp;<br>Forecast</div>
+    <div class="nav-item"><span class="nav-icon">⊞</span> Dashboard</div>
+    <div class="nav-item"><span class="nav-icon">↗</span> Generate Forecast</div>
+    <div class="nav-item"><span class="nav-icon">💡</span> Explain Prediction (XAI)</div>
+    <div class="nav-item"><span class="nav-icon">∿</span> Spending Patterns</div>
+    <div class="nav-item"><span class="nav-icon">📊</span> Variance Reports</div>
+    <div class="nav-item active"><span class="nav-icon">◐</span> Data Quality</div>
+    <div class="nav-item"><span class="nav-icon">🗄</span> Model Management</div>
+    <div class="nav-item"><span class="nav-icon">⚙</span> Settings</div>
+  </aside>
+
+  <div class="main">
+    <div class="header">
+      <div class="header-left">
+        <h2 id="screenTitle">Configure Data Quality Checks</h2>
+        <p id="screenSubtitle">Set up RPA-driven validation rules before model training</p>
+      </div>
+      <div class="header-right">
+        <span class="bell">🔔</span>
+        <div class="user-chip">
+          <div class="avatar">JS</div>
+          <div>
+            <div class="user-name">John Smith</div>
+            <div class="user-role">Financial Analyst</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="screen active" id="inputScreen">
+
+<div class="banner">
+  <span class="banner-icon">ⓘ</span>
+  <div>Robotic Process Automation will scan, clean, and validate data automatically. Define quality rules below.</div>
+</div>
+<div class="card">
+  <div class="card-title">📁 Data Sources to Validate</div>
+  <table>
+    <thead><tr><th></th><th>Source</th><th>Last Sync</th><th>Records</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr><td><input type="checkbox" checked></td><td><strong>General Ledger</strong></td><td>2 mins ago</td><td>87,420</td><td><span class="pill pill-success">Healthy</span></td></tr>
+      <tr><td><input type="checkbox" checked></td><td><strong>AP Invoices</strong></td><td>15 mins ago</td><td>23,145</td><td><span class="pill pill-success">Healthy</span></td></tr>
+      <tr><td><input type="checkbox" checked></td><td><strong>AR Invoices</strong></td><td>1 hour ago</td><td>18,390</td><td><span class="pill pill-warning">Stale</span></td></tr>
+      <tr><td><input type="checkbox"></td><td><strong>Payroll</strong></td><td>1 day ago</td><td>1,240</td><td><span class="pill pill-success">Healthy</span></td></tr>
+      <tr><td><input type="checkbox" checked></td><td><strong>Expense Reports</strong></td><td>30 mins ago</td><td>11,094</td><td><span class="pill pill-success">Healthy</span></td></tr>
+      <tr><td><input type="checkbox"></td><td><strong>External Feeds</strong></td><td>3 days ago</td><td>1,300</td><td><span class="pill pill-danger">Error</span></td></tr>
+    </tbody>
+  </table>
+</div>
+<div class="card">
+  <div class="card-title">⚙ Quality Rules (RPA Tasks)</div>
+  <div style="display: flex; flex-direction: column; gap: 8px;">
+    <div style="display: flex; justify-content: space-between; padding: 14px; border: 1px solid #E5E7EB; border-radius: 6px; align-items: center;">
+      <div><div style="font-weight: 500;">Detect missing values</div><div class="subtle">Flag rows with null required fields</div></div>
+      <div style="display: flex; align-items: center; gap: 12px;"><select class="select" style="width: 130px;"><option>Critical</option><option>Warning</option><option>Info</option></select><div class="toggle on"></div></div>
+    </div>
+    <div style="display: flex; justify-content: space-between; padding: 14px; border: 1px solid #E5E7EB; border-radius: 6px; align-items: center;">
+      <div><div style="font-weight: 500;">Identify duplicate transactions</div><div class="subtle">Match by amount + date + vendor</div></div>
+      <div style="display: flex; align-items: center; gap: 12px;"><select class="select" style="width: 130px;"><option>Critical</option></select><div class="toggle on"></div></div>
+    </div>
+    <div style="display: flex; justify-content: space-between; padding: 14px; border: 1px solid #E5E7EB; border-radius: 6px; align-items: center;">
+      <div><div style="font-weight: 500;">Flag outliers (Z-score > 3)</div><div class="subtle">Statistical anomaly detection</div></div>
+      <div style="display: flex; align-items: center; gap: 12px;"><select class="select" style="width: 130px;"><option>Warning</option></select><div class="toggle on"></div></div>
+    </div>
+    <div style="display: flex; justify-content: space-between; padding: 14px; border: 1px solid #E5E7EB; border-radius: 6px; align-items: center;">
+      <div><div style="font-weight: 500;">Validate currency consistency</div><div class="subtle">Check against exchange rates</div></div>
+      <div style="display: flex; align-items: center; gap: 12px;"><select class="select" style="width: 130px;"><option>Critical</option></select><div class="toggle on"></div></div>
+    </div>
+    <div style="display: flex; justify-content: space-between; padding: 14px; border: 1px solid #E5E7EB; border-radius: 6px; align-items: center;">
+      <div><div style="font-weight: 500;">Verify account code mapping</div><div class="subtle">Match to chart of accounts</div></div>
+      <div style="display: flex; align-items: center; gap: 12px;"><select class="select" style="width: 130px;"><option>Warning</option></select><div class="toggle on"></div></div>
+    </div>
+  </div>
+  <button class="btn btn-secondary" style="margin-top: 16px;">+ Add Custom Rule</button>
+</div>
+<div class="card">
+  <div class="card-title">⏱ Automation Schedule</div>
+  <div class="grid-2">
+    <div class="radio-card selected">
+      <div class="radio-card-title"><span>● Run Before Every Forecast</span></div>
+      <div class="radio-card-desc">Automatic — recommended</div>
+    </div>
+    <div class="radio-card">
+      <div class="radio-card-title"><span>○ Run on Schedule</span></div>
+      <div class="radio-card-desc">Daily / Weekly cron</div>
+    </div>
+  </div>
+  <div class="toggle-row" style="margin-top: 16px;">
+    <div><div style="font-weight: 500;">Auto-fix non-critical issues</div><div class="subtle">RPA bots clean automatically</div></div>
+    <div class="toggle on"></div>
+  </div>
+  <div class="toggle-row">
+    <div><div style="font-weight: 500;">Notify on completion</div><div class="subtle">Email: john.smith@nyota.com</div></div>
+    <div class="toggle on"></div>
+  </div>
+</div>
+<div class="actions">
+  <button class="btn btn-text">Save as Template</button>
+  <button class="btn btn-secondary">Cancel</button>
+  <button class="btn btn-primary">Run Quality Check →</button>
+</div>
+
+      </div>
+      <div class="screen" id="outputScreen">
+
+<div style="display: flex; gap: 8px; margin-bottom: 20px;"><span class="pill pill-warning">⚠ Passed with Warnings</span><span class="subtle">RPA Run · 47 seconds · 142,589 records</span></div>
+<div class="grid-4">
+  <div class="kpi" style="text-align: center;">
+    <div class="kpi-label">Quality Score</div>
+    <div class="gauge" style="background: conic-gradient(#10B981 0% 92%, #E5E7EB 92% 100%);">
+      <div class="gauge-inner"><div class="gauge-value">92</div><div class="gauge-label">/100</div></div>
+    </div>
+  </div>
+  <div class="kpi"><div class="kpi-label">Records Cleaned</div><div class="kpi-value">1,284</div><div class="kpi-trend">Auto-fixed by RPA</div></div>
+  <div class="kpi"><div class="kpi-label">Critical Issues</div><div class="kpi-value" style="color: #EF4444;">3</div><div class="kpi-trend down">Need manual review</div></div>
+  <div class="kpi"><div class="kpi-label">Warnings</div><div class="kpi-value" style="color: #F59E0B;">47</div><div class="kpi-trend">Non-blocking</div></div>
+</div>
+<div class="card" style="margin-top: 20px;">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+    <div class="card-title" style="margin: 0;">Issues Detected</div>
+    <div style="display: flex; gap: 6px;">
+      <span class="pill pill-info" style="cursor: pointer;">All (50)</span>
+      <span class="pill pill-danger" style="cursor: pointer;">Critical (3)</span>
+      <span class="pill pill-warning" style="cursor: pointer;">Warning (47)</span>
+      <span class="pill pill-success" style="cursor: pointer;">Auto-fixed (1,284)</span>
+    </div>
+  </div>
+  <table>
+    <thead><tr><th>Severity</th><th>Rule</th><th>Source</th><th>Records</th><th>Action Taken</th><th></th></tr></thead>
+    <tbody>
+      <tr><td><span class="pill pill-danger">Critical</span></td><td>Currency mismatch detected</td><td>External Feeds</td><td>34</td><td>Quarantined</td><td><a href="#" style="color: #3B82F6;">View</a></td></tr>
+      <tr><td><span class="pill pill-danger">Critical</span></td><td>Missing vendor codes</td><td>AP Invoices</td><td>12</td><td>Quarantined</td><td><a href="#" style="color: #3B82F6;">View</a></td></tr>
+      <tr><td><span class="pill pill-danger">Critical</span></td><td>Duplicate transactions</td><td>General Ledger</td><td>89</td><td>Auto-removed</td><td><a href="#" style="color: #3B82F6;">View</a></td></tr>
+      <tr><td><span class="pill pill-warning">Warning</span></td><td>Outliers detected (Z>3)</td><td>Multiple</td><td>127</td><td>Flagged</td><td><a href="#" style="color: #3B82F6;">View</a></td></tr>
+      <tr><td><span class="pill pill-warning">Warning</span></td><td>Date format inconsistency</td><td>External Feeds</td><td>18</td><td>Auto-standardized</td><td><a href="#" style="color: #3B82F6;">View</a></td></tr>
+    </tbody>
+  </table>
+</div>
+<div class="grid-2">
+  <div class="card">
+    <div class="card-title">Quality by Source</div>
+    <div class="bar-row"><div class="bar-label">General Ledger</div><div class="bar-track"><div class="bar-fill" style="width: 96%; background: #10B981;">96</div></div></div>
+    <div class="bar-row"><div class="bar-label">Payroll</div><div class="bar-track"><div class="bar-fill" style="width: 95%; background: #10B981;">95</div></div></div>
+    <div class="bar-row"><div class="bar-label">AP Invoices</div><div class="bar-track"><div class="bar-fill" style="width: 91%; background: #10B981;">91</div></div></div>
+    <div class="bar-row"><div class="bar-label">Expense Reports</div><div class="bar-track"><div class="bar-fill" style="width: 89%; background: #10B981;">89</div></div></div>
+    <div class="bar-row"><div class="bar-label">AR Invoices</div><div class="bar-track"><div class="bar-fill" style="width: 87%; background: #F59E0B;">87</div></div></div>
+    <div class="bar-row"><div class="bar-label">External Feeds</div><div class="bar-track"><div class="bar-fill" style="width: 72%; background: #EF4444;">72</div></div></div>
+  </div>
+  <div class="card">
+    <div class="card-title">Before vs After Cleaning</div>
+    <table>
+      <thead><tr><th>Metric</th><th>Before</th><th>After</th></tr></thead>
+      <tbody>
+        <tr><td>Missing values</td><td style="color: #EF4444; font-weight: 600;">412</td><td style="color: #10B981; font-weight: 600;">18</td></tr>
+        <tr><td>Duplicates</td><td style="color: #EF4444; font-weight: 600;">89</td><td style="color: #10B981; font-weight: 600;">0</td></tr>
+        <tr><td>Currency issues</td><td style="color: #EF4444; font-weight: 600;">34</td><td style="color: #F59E0B; font-weight: 600;">3</td></tr>
+        <tr><td>Format issues</td><td style="color: #F59E0B; font-weight: 600;">156</td><td style="color: #10B981; font-weight: 600;">0</td></tr>
+        <tr><td>Outliers flagged</td><td>—</td><td style="color: #F59E0B; font-weight: 600;">127</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+<div class="ai-card">
+  <div style="font-weight: 600; margin-bottom: 12px;"><span class="ai-icon">✨</span>RPA Recommendations</div>
+  <ul style="margin-left: 20px; line-height: 1.8; font-size: 14px; color: #1E3A8A;">
+    <li>Review 12 transactions with missing vendor codes in AP source — list exported</li>
+    <li>Investigate $50K outlier in Marketing on 2026-03-15 — possible data entry error</li>
+    <li>Fix External Feeds connector — 3-day sync delay degrading source reliability</li>
+  </ul>
+</div>
+<div class="actions">
+  <button class="btn btn-secondary">Download Report (PDF)</button>
+  <button class="btn btn-secondary">Re-run Quality Check</button>
+  <button class="btn btn-primary">Proceed to Model Training →</button>
+</div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const titles = {
+  input: { t: 'Configure Data Quality Checks', s: 'Set up RPA-driven validation rules before model training' },
+  output: { t: 'Data Quality Report', s: 'Run completed at 14:47 — 142,589 records scanned' }
+};
+document.querySelectorAll('.toggle-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const mode = btn.dataset.mode;
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(mode + 'Screen').classList.add('active');
+    document.getElementById('screenTitle').textContent = titles[mode].t;
+    document.getElementById('screenSubtitle').textContent = titles[mode].s;
+    window.scrollTo(0,0);
+  });
+});
+</script>
+</body>
+</html>

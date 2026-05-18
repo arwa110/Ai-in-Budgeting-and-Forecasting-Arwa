@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net">
+  <diagram name="Page-1" id="7x7iEAbkjNZBYp2vF3uV">
+    <mxGraphModel dx="1585" dy="811" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="jKkavuwGa4PQ_U0x3ARD-2" edge="1" parent="1" source="jKkavuwGa4PQ_U0x3ARD-3" style="edgeStyle=none;curved=1;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fontSize=12;startSize=8;endSize=8;" target="jKkavuwGa4PQ_U0x3ARD-11">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="jKkavuwGa4PQ_U0x3ARD-3" parent="1" style="shape=umlActor;html=1;verticalLabelPosition=bottom;verticalAlign=top;align=center;" value="Budget manager" vertex="1">
+          <mxGeometry height="60" width="30" x="180" y="160" as="geometry" />
+        </mxCell>
+        <mxCell id="jKkavuwGa4PQ_U0x3ARD-4" edge="1" parent="1" source="jKkavuwGa4PQ_U0x3ARD-5" style="edgeStyle=none;curved=1;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;fontSize=12;startSize=8;endSize=8;" target="jKkavuwGa4PQ_U0x3ARD-10">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="jKkavuwGa4PQ_U0x3ARD-5" parent="1" style="shape=umlActor;html=1;verticalLabelPosition=bottom;verticalAlign=top;align=center;" value="Data engineer" vertex="1">
+          <mxGeometry height="60" width="30" x="750" y="240" as="geometry" />
+        </mxCell>
+        <mxCell id="jKkavuwGa4PQ_U0x3ARD-6" parent="1" style="swimlane;fontStyle=1;align=center;horizontal=1;startSize=30;collapsible=0;html=1;whiteSpace=wrap;" value="AI-Powered Budgeting and forecasying system" vertex="1">
+          <mxGeometry height="580" width="460" x="260" y="90" as="geometry" />
+        </mxCell>
+        <mxCell id="jKkavuwGa4PQ_U0x3ARD-7" parent="jKkavuwGa4PQ_U0x3ARD-6" style="ellipse;whiteSpace=wrap;html=1;" value="REQ-1: initiates forecasting request" vertex="1">
+          <mxGeometry height="80" width="120" x="20" y="250" as="geometry" />
+        </mxCell>
+        <mxCell id="jKkavuwGa4PQ_U0x3ARD-8" parent="jKkavuwGa4PQ_U0x3ARD-6" style="ellipse;whiteSpace=wrap;html=1;" value="REQ-3: analyze historical pattern for each department using clustering&amp;nbsp;" vertex="1">
+          <mxGeometry height="80" width="170" x="180" y="380" as="geometry" />
+        </mxCell>
+        <mxCell id="jKkavuwGa4PQ_U0x3ARD-9" parent="jKkavuwGa4PQ_U0x3ARD-6" style="ellipse;whiteSpace=wrap;html=1;" value="REQ-2: generate forecasts using DL" vertex="1">
+          <mxGeometry height="80" width="120" x="150" y="300" as="geometry" />
+        </mxCell>
+        <mxCell id="jKkavuwGa4PQ_U0x3ARD-10" parent="jKkavuwGa4PQ_U0x3ARD-6" style="ellipse;whiteSpace=wrap;html=1;" value="REQ-5: ensure data quality using RPA" vertex="1">
+          <mxGeometry height="80" width="120" x="270" y="140" as="geometry" />
+        </mxCell>
+        <mxCell id="jKkavuwGa4PQ_U0x3ARD-11" parent="jKkavuwGa4PQ_U0x3ARD-6" style="ellipse;whiteSpace=wrap;html=1;" value="REQ-6: receive budget forecast and either approves or returns" vertex="1">
+          <mxGeometry height="80" width="140" x="70" y="60" as="geometry" />
+        </mxCell>
+        <mxCell id="jKkavuwGa4PQ_U0x3ARD-12" parent="jKkavuwGa4PQ_U0x3ARD-6" style="ellipse;whiteSpace=wrap;html=1;" value="REQ-4: forecast expense trends using ML ensemble methods" vertex="1">
+          <mxGeometry height="80" width="170" x="125" y="490" as="geometry" />
+        </mxCell>
+        <mxCell id="jKkavuwGa4PQ_U0x3ARD-13" edge="1" parent="1" source="jKkavuwGa4PQ_U0x3ARD-16" style="edgeStyle=none;curved=1;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fontSize=12;startSize=8;endSize=8;" target="jKkavuwGa4PQ_U0x3ARD-7">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="jKkavuwGa4PQ_U0x3ARD-14" edge="1" parent="1" source="jKkavuwGa4PQ_U0x3ARD-16" style="edgeStyle=none;curved=1;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;fontSize=12;startSize=8;endSize=8;" target="jKkavuwGa4PQ_U0x3ARD-8">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="jKkavuwGa4PQ_U0x3ARD-15" edge="1" parent="1" source="jKkavuwGa4PQ_U0x3ARD-16" style="edgeStyle=none;curved=1;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;fontSize=12;startSize=8;endSize=8;" target="jKkavuwGa4PQ_U0x3ARD-9">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="jKkavuwGa4PQ_U0x3ARD-16" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;" value="Financial analyst" vertex="1">
+          <mxGeometry height="60" width="30" x="180" y="560" as="geometry" />
+        </mxCell>
+        <mxCell id="jKkavuwGa4PQ_U0x3ARD-17" edge="1" parent="1" source="jKkavuwGa4PQ_U0x3ARD-16" style="edgeStyle=none;curved=1;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;fontSize=12;startSize=8;endSize=8;" target="jKkavuwGa4PQ_U0x3ARD-12">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="290" y="675" as="sourcePoint" />
+            <mxPoint x="520" y="600" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

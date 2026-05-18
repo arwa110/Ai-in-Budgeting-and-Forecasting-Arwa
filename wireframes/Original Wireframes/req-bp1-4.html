@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>REQ-BP1-4 — Forecast Expense Trends (ML Ensemble)</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: #F3F4F6; color: #111827; font-size: 14px; }
+
+.story-bar { position: fixed; top: 0; left: 0; right: 0; background: #1F2937; color: #F9FAFB; padding: 10px 24px; z-index: 100; display: flex; align-items: center; gap: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+.story-bar h1 { font-size: 14px; font-weight: 600; }
+.story-bar .req-id { background: #3B82F6; padding: 4px 10px; border-radius: 4px; font-size: 12px; font-weight: 600; }
+.toggle-group { display: flex; background: #374151; border-radius: 6px; padding: 2px; margin-left: auto; }
+.toggle-btn { background: transparent; color: #D1D5DB; border: none; padding: 6px 16px; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: 500; }
+.toggle-btn.active { background: #3B82F6; color: white; }
+
+.app { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; padding-top: 56px; }
+
+.sidebar { background: white; border-right: 1px solid #E5E7EB; padding: 24px 0; height: calc(100vh - 56px); position: sticky; top: 56px; overflow-y: auto; }
+.brand { padding: 0 24px 24px; font-size: 18px; font-weight: 700; color: #111827; line-height: 1.3; border-bottom: 1px solid #F3F4F6; margin-bottom: 12px; }
+.nav-item { display: flex; align-items: center; gap: 12px; padding: 10px 24px; color: #6B7280; font-size: 14px; font-weight: 500; border-left: 3px solid transparent; cursor: pointer; }
+.nav-item:hover { background: #F9FAFB; }
+.nav-item.active { background: #EFF6FF; color: #3B82F6; border-left-color: #3B82F6; }
+.nav-icon { width: 18px; flex-shrink: 0; font-size: 16px; }
+
+.main { display: flex; flex-direction: column; background: #F9FAFB; }
+.header { background: white; border-bottom: 1px solid #E5E7EB; padding: 16px 32px; display: flex; justify-content: space-between; align-items: center; }
+.header-left h2 { font-size: 18px; font-weight: 600; color: #111827; }
+.header-left p { font-size: 13px; color: #6B7280; margin-top: 2px; }
+.header-right { display: flex; align-items: center; gap: 16px; }
+.bell { width: 20px; height: 20px; color: #6B7280; position: relative; cursor: pointer; }
+.bell::after { content: ''; position: absolute; top: 0; right: 0; width: 8px; height: 8px; background: #3B82F6; border-radius: 50%; border: 2px solid white; }
+.user-chip { display: flex; align-items: center; gap: 10px; }
+.avatar { width: 36px; height: 36px; border-radius: 50%; background: #DBEAFE; color: #3B82F6; display: flex; align-items: center; justify-content: center; font-weight: 600; }
+.user-name { font-weight: 600; font-size: 14px; }
+.user-role { font-size: 12px; color: #6B7280; }
+.content { padding: 32px; flex: 1; }
+
+.banner { background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 8px; padding: 14px 18px; display: flex; gap: 12px; align-items: flex-start; margin-bottom: 24px; color: #1E40AF; font-size: 14px; }
+.banner-icon { flex-shrink: 0; font-weight: bold; }
+
+.card { background: white; border: 1px solid #E5E7EB; border-radius: 8px; padding: 24px; margin-bottom: 20px; }
+.card-title { font-size: 16px; font-weight: 600; margin-bottom: 16px; color: #111827; display: flex; align-items: center; gap: 8px; }
+
+.field { margin-bottom: 20px; }
+.label { display: block; font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 6px; }
+.req { color: #EF4444; }
+.input, .select, .textarea { width: 100%; padding: 10px 12px; border: 1px solid #D1D5DB; border-radius: 6px; font-size: 14px; font-family: inherit; background: white; }
+.input:focus, .select:focus, .textarea:focus { outline: none; border-color: #3B82F6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+.textarea { resize: vertical; min-height: 80px; }
+.help { font-size: 12px; color: #6B7280; margin-top: 4px; }
+
+.tag-input { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px; border: 1px solid #D1D5DB; border-radius: 6px; min-height: 42px; align-items: center; }
+.tag { background: #DBEAFE; color: #1E40AF; padding: 4px 10px; border-radius: 4px; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; }
+.tag-x { cursor: pointer; opacity: 0.6; }
+
+.radio-card { border: 2px solid #E5E7EB; border-radius: 8px; padding: 14px 16px; cursor: pointer; margin-bottom: 8px; transition: all 0.15s; }
+.radio-card:hover { border-color: #93C5FD; }
+.radio-card.selected { border-color: #3B82F6; background: #EFF6FF; }
+.radio-card-title { font-weight: 600; font-size: 14px; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; justify-content: space-between; }
+.radio-card-desc { font-size: 12px; color: #6B7280; }
+
+.btn { padding: 10px 20px; border-radius: 6px; font-size: 14px; font-weight: 500; cursor: pointer; border: none; font-family: inherit; }
+.btn-primary { background: #3B82F6; color: white; }
+.btn-primary:hover { background: #2563EB; }
+.btn-secondary { background: white; color: #374151; border: 1px solid #D1D5DB; }
+.btn-secondary:hover { background: #F9FAFB; }
+.btn-danger { background: white; color: #EF4444; border: 1px solid #FCA5A5; }
+.btn-success { background: #10B981; color: white; }
+.btn-warning { background: #F59E0B; color: white; }
+.btn-text { background: transparent; color: #3B82F6; padding: 10px 12px; }
+.btn-disabled { background: #E5E7EB; color: #9CA3AF; cursor: not-allowed; }
+
+.actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px; padding-top: 20px; border-top: 1px solid #E5E7EB; }
+
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+.grid-2-3 { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+
+.kpi { background: white; border: 1px solid #E5E7EB; border-radius: 8px; padding: 18px; }
+.kpi-label { font-size: 12px; color: #6B7280; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
+.kpi-value { font-size: 24px; font-weight: 700; color: #111827; margin-top: 6px; }
+.kpi-trend { font-size: 12px; margin-top: 4px; color: #6B7280; }
+.kpi-trend.up { color: #10B981; }
+.kpi-trend.down { color: #EF4444; }
+
+.pill { display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 500; }
+.pill-success { background: #D1FAE5; color: #065F46; }
+.pill-warning { background: #FEF3C7; color: #92400E; }
+.pill-danger { background: #FEE2E2; color: #991B1B; }
+.pill-info { background: #DBEAFE; color: #1E40AF; }
+.pill-neutral { background: #F3F4F6; color: #4B5563; }
+
+.subtle { color: #6B7280; font-size: 13px; }
+.summary-row { padding: 10px 0; }
+.summary-label { font-size: 12px; color: #6B7280; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 500; }
+.summary-value { font-size: 14px; font-weight: 500; color: #111827; margin-top: 2px; }
+
+.muted-card { background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 8px; padding: 16px; }
+
+.toggle { position: relative; width: 40px; height: 22px; background: #D1D5DB; border-radius: 11px; cursor: pointer; transition: background 0.2s; }
+.toggle.on { background: #3B82F6; }
+.toggle::after { content: ''; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; background: white; border-radius: 50%; transition: transform 0.2s; }
+.toggle.on::after { transform: translateX(18px); }
+.toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; }
+
+.slider-row { display: flex; align-items: center; gap: 12px; }
+.slider-row input[type=range] { flex: 1; }
+.slider-value { font-weight: 600; min-width: 60px; text-align: right; }
+
+.checkbox-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; font-size: 14px; }
+.checkbox-row input { width: 16px; height: 16px; cursor: pointer; }
+
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { text-align: left; padding: 10px 12px; background: #F9FAFB; color: #6B7280; font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #E5E7EB; }
+td { padding: 12px; border-bottom: 1px solid #F3F4F6; color: #111827; }
+tbody tr:hover { background: #F9FAFB; }
+
+.chart { background: linear-gradient(180deg, #F9FAFB 0%, white 100%); border: 1px dashed #D1D5DB; border-radius: 6px; padding: 16px; min-height: 240px; display: flex; align-items: center; justify-content: center; position: relative; }
+.chart svg { width: 100%; height: 100%; }
+
+.ai-card { background: linear-gradient(135deg, #EFF6FF 0%, #F0F9FF 100%); border: 1px solid #BFDBFE; border-radius: 8px; padding: 20px; margin-bottom: 20px; }
+.ai-icon { display: inline-flex; width: 24px; height: 24px; background: #3B82F6; color: white; border-radius: 6px; align-items: center; justify-content: center; font-size: 14px; margin-right: 8px; vertical-align: middle; }
+
+.bar-row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; font-size: 13px; }
+.bar-label { min-width: 130px; }
+.bar-track { flex: 1; height: 22px; background: #F3F4F6; border-radius: 4px; overflow: hidden; }
+.bar-fill { height: 100%; background: #3B82F6; display: flex; align-items: center; padding: 0 8px; color: white; font-size: 11px; font-weight: 600; }
+.bar-value { min-width: 60px; text-align: right; font-weight: 600; }
+
+.cluster-card { border-top: 4px solid #3B82F6; background: white; border: 1px solid #E5E7EB; border-radius: 8px; padding: 16px; }
+.cluster-card.c1 { border-top: 4px solid #3B82F6; }
+.cluster-card.c2 { border-top: 4px solid #10B981; }
+.cluster-card.c3 { border-top: 4px solid #F59E0B; }
+.cluster-card.c4 { border-top: 4px solid #EF4444; }
+
+.callout { display: flex; gap: 12px; padding: 14px 16px; background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 8px; margin-bottom: 8px; }
+.callout-icon { width: 32px; height: 32px; background: #F59E0B; color: white; border-radius: 6px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 16px; }
+
+.timeline-item { display: flex; gap: 12px; padding: 10px 0; }
+.timeline-dot { width: 10px; height: 10px; border-radius: 50%; margin-top: 6px; flex-shrink: 0; }
+.timeline-title { font-size: 14px; font-weight: 500; color: #111827; }
+.timeline-meta { font-size: 12px; color: #6B7280; margin-top: 2px; }
+
+.legend { display: flex; gap: 16px; font-size: 12px; color: #6B7280; flex-wrap: wrap; }
+.legend-item { display: flex; align-items: center; gap: 6px; }
+.legend-dot { width: 10px; height: 10px; border-radius: 2px; }
+
+.gauge { width: 90px; height: 90px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 12px auto 4px; }
+.gauge-inner { width: 70px; height: 70px; background: white; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.gauge-value { font-size: 18px; font-weight: 700; color: #111827; }
+.gauge-label { font-size: 11px; color: #6B7280; }
+
+.heatmap-grid { display: grid; gap: 2px; }
+.heatmap-cell { aspect-ratio: 1; border-radius: 2px; }
+
+.breadcrumb { font-size: 13px; color: #6B7280; margin-bottom: 8px; }
+.breadcrumb a { color: #3B82F6; text-decoration: none; }
+
+.fab { position: fixed; bottom: 24px; right: 24px; background: #3B82F6; color: white; padding: 14px 20px; border-radius: 999px; font-size: 14px; font-weight: 500; cursor: pointer; box-shadow: 0 4px 12px rgba(59,130,246,0.4); display: flex; align-items: center; gap: 8px; }
+
+.screen { display: none; }
+.screen.active { display: block; }
+</style>
+</head>
+<body>
+
+<div class="story-bar">
+  <span class="req-id">REQ-BP1-4</span>
+  <h1>Forecast Expense Trends (ML Ensemble)</h1>
+  <div class="toggle-group">
+    <button class="toggle-btn active" data-mode="input">📝 Input Screen</button>
+    <button class="toggle-btn" data-mode="output">📊 Output Screen</button>
+  </div>
+</div>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">AI Budget &amp;<br>Forecast</div>
+    <div class="nav-item"><span class="nav-icon">⊞</span> Dashboard</div>
+    <div class="nav-item active"><span class="nav-icon">↗</span> Generate Forecast</div>
+    <div class="nav-item"><span class="nav-icon">💡</span> Explain Prediction (XAI)</div>
+    <div class="nav-item"><span class="nav-icon">∿</span> Spending Patterns</div>
+    <div class="nav-item"><span class="nav-icon">📊</span> Variance Reports</div>
+    <div class="nav-item"><span class="nav-icon">◐</span> Data Quality</div>
+    <div class="nav-item"><span class="nav-icon">🗄</span> Model Management</div>
+    <div class="nav-item"><span class="nav-icon">⚙</span> Settings</div>
+  </aside>
+
+  <div class="main">
+    <div class="header">
+      <div class="header-left">
+        <h2 id="screenTitle">ML Ensemble Expense Forecast</h2>
+        <p id="screenSubtitle">Combine multiple models for robust expense predictions</p>
+      </div>
+      <div class="header-right">
+        <span class="bell">🔔</span>
+        <div class="user-chip">
+          <div class="avatar">JS</div>
+          <div>
+            <div class="user-name">John Smith</div>
+            <div class="user-role">Financial Analyst</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="screen active" id="inputScreen">
+
+<div class="banner">
+  <span class="banner-icon">ⓘ</span>
+  <div>Ensemble methods aggregate predictions from several models, reducing error and increasing reliability.</div>
+</div>
+<div class="grid-2">
+  <div class="card">
+    <div class="card-title">Forecast Scope</div>
+    <div class="grid-2">
+      <div class="field"><label class="label">From <span class="req">*</span></label><input type="date" class="input" value="2026-05-01"></div>
+      <div class="field"><label class="label">To <span class="req">*</span></label><input type="date" class="input" value="2026-10-31"></div>
+    </div>
+    <div class="field">
+      <label class="label">Expense Categories</label>
+      <div class="tag-input"><span class="tag">Salaries ×</span><span class="tag">Operations ×</span><span class="tag">Marketing ×</span><span class="tag">IT ×</span><span class="tag">Travel ×</span></div>
+    </div>
+    <div class="field">
+      <label class="label">Cost Centers</label>
+      <select class="select"><option>All Cost Centers</option><option>Selected (3)</option></select>
+    </div>
+    <div class="field">
+      <label class="label">Granularity</label>
+      <div style="display: flex; gap: 8px;">
+        <button class="btn btn-secondary" style="flex: 1;">Daily</button>
+        <button class="btn btn-secondary" style="flex: 1;">Weekly</button>
+        <button class="btn btn-primary" style="flex: 1;">Monthly</button>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">Ensemble Configuration</div>
+    <div class="subtle" style="margin-bottom: 12px;">Select 2 or more models</div>
+    <div class="radio-card selected">
+      <div class="radio-card-title">
+        <span>☑ XGBoost</span>
+        <span class="pill pill-success">92% acc</span>
+      </div>
+      <div class="radio-card-desc">Gradient boosting — strong on tabular data</div>
+    </div>
+    <div class="radio-card selected">
+      <div class="radio-card-title">
+        <span>☑ Neural Network</span>
+        <span class="pill pill-success">91% acc</span>
+      </div>
+      <div class="radio-card-desc">Deep learning — captures complex patterns</div>
+    </div>
+    <div class="radio-card selected">
+      <div class="radio-card-title">
+        <span>☑ Random Forest</span>
+        <span class="pill pill-info">89% acc</span>
+      </div>
+      <div class="radio-card-desc">Tree ensemble — robust to outliers</div>
+    </div>
+    <div class="radio-card selected">
+      <div class="radio-card-title">
+        <span>☑ Prophet</span>
+        <span class="pill pill-info">87% acc</span>
+      </div>
+      <div class="radio-card-desc">Seasonal decomposition — handles holidays</div>
+    </div>
+    <div class="radio-card">
+      <div class="radio-card-title">
+        <span>☐ ARIMA</span>
+        <span class="pill pill-neutral">85% acc</span>
+      </div>
+      <div class="radio-card-desc">Classic time series — simple and fast</div>
+    </div>
+    <div class="field" style="margin-top: 16px;">
+      <label class="label">Aggregation Method</label>
+      <select class="select"><option>Weighted Average</option><option>Stacking</option><option>Voting</option></select>
+    </div>
+    <div class="toggle-row">
+      <div style="font-weight: 500;">Auto-weight by performance</div>
+      <div class="toggle on"></div>
+    </div>
+  </div>
+</div>
+<div class="actions">
+  <button class="btn btn-text">Save Configuration</button>
+  <button class="btn btn-secondary">Cancel</button>
+  <button class="btn btn-primary">Run Ensemble Forecast →</button>
+</div>
+
+      </div>
+      <div class="screen" id="outputScreen">
+
+<div style="display: flex; gap: 8px; margin-bottom: 20px;"><span class="pill pill-success">✓ Forecast Ready</span><span class="pill pill-info">Weighted Ensemble · 4 models</span></div>
+<div class="grid-4">
+  <div class="kpi"><div class="kpi-label">Total Forecasted Expense</div><div class="kpi-value">$3,847,200</div><div class="kpi-trend up">▲ 5.4% vs last 6mo</div></div>
+  <div class="kpi"><div class="kpi-label">Ensemble Accuracy</div><div class="kpi-value">95.1%</div><div class="kpi-trend up">▲ Better than any single model</div></div>
+  <div class="kpi"><div class="kpi-label">Confidence Interval</div><div class="kpi-value">± $128,400</div><div class="kpi-trend">95% confidence</div></div>
+  <div class="kpi"><div class="kpi-label">Models Combined</div><div class="kpi-value">4</div><div class="kpi-trend">XGB · NN · RF · Prophet</div></div>
+</div>
+<div class="card" style="margin-top: 20px;">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+    <div class="card-title" style="margin: 0;">Expense Trend Forecast</div>
+    <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">Show individual models</span><div class="toggle on"></div></div>
+  </div>
+  <div class="chart" style="min-height: 260px;">
+    <svg viewBox="0 0 600 220">
+      <g stroke="#E5E7EB" stroke-width="0.5"><line x1="40" y1="40" x2="580" y2="40"/><line x1="40" y1="100" x2="580" y2="100"/><line x1="40" y1="160" x2="580" y2="160"/></g>
+      <path d="M40,140 L120,135 L200,128 L280,120 L360,115 L440,108 L520,102 L580,98" stroke="#9CA3AF" stroke-width="1" stroke-dasharray="2,2" fill="none" opacity="0.5"/>
+      <path d="M40,150 L120,142 L200,138 L280,128 L360,118 L440,110 L520,105 L580,100" stroke="#9CA3AF" stroke-width="1" stroke-dasharray="2,2" fill="none" opacity="0.5"/>
+      <path d="M40,135 L120,130 L200,123 L280,115 L360,108 L440,100 L520,95 L580,92" stroke="#9CA3AF" stroke-width="1" stroke-dasharray="2,2" fill="none" opacity="0.5"/>
+      <path d="M40,128 L120,122 L200,116 L280,108 L360,100 L440,92 L520,87 L580,82 L580,108 L520,111 L440,116 L360,124 L280,130 L200,138 L120,144 L40,148 Z" fill="#DBEAFE" opacity="0.5"/>
+      <path d="M40,138 L120,132 L200,126 L280,118 L360,112 L440,104 L520,99 L580,95" stroke="#3B82F6" stroke-width="3" fill="none"/>
+      <text x="40" y="200" font-size="10" fill="#9CA3AF">May</text><text x="120" y="200" font-size="10" fill="#9CA3AF">Jun</text><text x="200" y="200" font-size="10" fill="#9CA3AF">Jul</text><text x="280" y="200" font-size="10" fill="#9CA3AF">Aug</text><text x="360" y="200" font-size="10" fill="#9CA3AF">Sep</text><text x="440" y="200" font-size="10" fill="#9CA3AF">Oct</text>
+    </svg>
+  </div>
+  <div class="legend" style="margin-top: 12px;">
+    <div class="legend-item"><div class="legend-dot" style="background: #3B82F6;"></div>Ensemble Prediction</div>
+    <div class="legend-item"><div class="legend-dot" style="background: #DBEAFE;"></div>Confidence Band</div>
+    <div class="legend-item"><div class="legend-dot" style="background: #9CA3AF;"></div>Individual Models</div>
+  </div>
+</div>
+<div class="grid-2">
+  <div class="card">
+    <div class="card-title">Model Contribution Weights</div>
+    <div class="bar-row"><div class="bar-label">XGBoost</div><div class="bar-track"><div class="bar-fill" style="width: 32%;">32%</div></div></div>
+    <div class="bar-row"><div class="bar-label">Neural Network</div><div class="bar-track"><div class="bar-fill" style="width: 28%; background: #10B981;">28%</div></div></div>
+    <div class="bar-row"><div class="bar-label">Random Forest</div><div class="bar-track"><div class="bar-fill" style="width: 22%; background: #F59E0B;">22%</div></div></div>
+    <div class="bar-row"><div class="bar-label">Prophet</div><div class="bar-track"><div class="bar-fill" style="width: 18%; background: #8B5CF6;">18%</div></div></div>
+    <div class="subtle" style="margin-top: 16px;">Weights determined automatically based on historical performance per model</div>
+  </div>
+  <div class="card">
+    <div class="card-title">Category Breakdown</div>
+    <table>
+      <thead><tr><th>Category</th><th>Forecast</th><th>%</th><th>Conf.</th></tr></thead>
+      <tbody>
+        <tr><td>Salaries</td><td>$1,920K</td><td>50%</td><td><span class="pill pill-success">High</span></td></tr>
+        <tr><td>Operations</td><td>$770K</td><td>20%</td><td><span class="pill pill-success">High</span></td></tr>
+        <tr><td>Marketing</td><td>$615K</td><td>16%</td><td><span class="pill pill-warning">Med</span></td></tr>
+        <tr><td>IT</td><td>$385K</td><td>10%</td><td><span class="pill pill-success">High</span></td></tr>
+        <tr><td>Travel</td><td>$157K</td><td>4%</td><td><span class="pill pill-warning">Med</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+<div class="card">
+  <div class="card-title">📌 Trend Highlights</div>
+  <div class="callout"><div class="callout-icon">↗</div><div><strong>Marketing expenses projected to rise 12% in Q2</strong><div class="subtle">Driven by planned product launch campaigns</div></div></div>
+  <div class="callout"><div class="callout-icon" style="background: #3B82F6;">⊟</div><div><strong>Travel expenses show seasonal dip in March</strong><div class="subtle">Consistent with prior 3 years' patterns</div></div></div>
+  <div class="callout"><div class="callout-icon" style="background: #10B981;">≈</div><div><strong>IT spending stable through period</strong><div class="subtle">No major infrastructure changes expected</div></div></div>
+</div>
+<div class="actions">
+  <button class="btn btn-secondary">Export Forecast</button>
+  <button class="btn btn-primary">Submit to Budget Manager →</button>
+</div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const titles = {
+  input: { t: 'ML Ensemble Expense Forecast', s: 'Combine multiple models for robust expense predictions' },
+  output: { t: 'Ensemble Expense Forecast Results', s: 'Next 6 Months · 4 models combined' }
+};
+document.querySelectorAll('.toggle-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const mode = btn.dataset.mode;
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(mode + 'Screen').classList.add('active');
+    document.getElementById('screenTitle').textContent = titles[mode].t;
+    document.getElementById('screenSubtitle').textContent = titles[mode].s;
+    window.scrollTo(0,0);
+  });
+});
+</script>
+</body>
+</html>

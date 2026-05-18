@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>REQ-BP1-1 — Initiate Budget Forecast</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: #F3F4F6; color: #111827; font-size: 14px; }
+
+.story-bar { position: fixed; top: 0; left: 0; right: 0; background: #1F2937; color: #F9FAFB; padding: 10px 24px; z-index: 100; display: flex; align-items: center; gap: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+.story-bar h1 { font-size: 14px; font-weight: 600; }
+.story-bar .req-id { background: #3B82F6; padding: 4px 10px; border-radius: 4px; font-size: 12px; font-weight: 600; }
+.toggle-group { display: flex; background: #374151; border-radius: 6px; padding: 2px; margin-left: auto; }
+.toggle-btn { background: transparent; color: #D1D5DB; border: none; padding: 6px 16px; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: 500; }
+.toggle-btn.active { background: #3B82F6; color: white; }
+
+.app { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; padding-top: 56px; }
+
+.sidebar { background: white; border-right: 1px solid #E5E7EB; padding: 24px 0; height: calc(100vh - 56px); position: sticky; top: 56px; overflow-y: auto; }
+.brand { padding: 0 24px 24px; font-size: 18px; font-weight: 700; color: #111827; line-height: 1.3; border-bottom: 1px solid #F3F4F6; margin-bottom: 12px; }
+.nav-item { display: flex; align-items: center; gap: 12px; padding: 10px 24px; color: #6B7280; font-size: 14px; font-weight: 500; border-left: 3px solid transparent; cursor: pointer; }
+.nav-item:hover { background: #F9FAFB; }
+.nav-item.active { background: #EFF6FF; color: #3B82F6; border-left-color: #3B82F6; }
+.nav-icon { width: 18px; height: 18px; flex-shrink: 0; font-size: 16px; }
+
+.main { display: flex; flex-direction: column; background: #F9FAFB; }
+.header { background: white; border-bottom: 1px solid #E5E7EB; padding: 16px 32px; display: flex; justify-content: space-between; align-items: center; }
+.header-left h2 { font-size: 18px; font-weight: 600; color: #111827; }
+.header-left p { font-size: 13px; color: #6B7280; margin-top: 2px; }
+.header-right { display: flex; align-items: center; gap: 16px; }
+.bell { width: 20px; height: 20px; color: #6B7280; position: relative; cursor: pointer; }
+.bell::after { content: ''; position: absolute; top: 0; right: 0; width: 8px; height: 8px; background: #3B82F6; border-radius: 50%; border: 2px solid white; }
+.user-chip { display: flex; align-items: center; gap: 10px; }
+.avatar { width: 36px; height: 36px; border-radius: 50%; background: #DBEAFE; color: #3B82F6; display: flex; align-items: center; justify-content: center; font-weight: 600; }
+.user-name { font-weight: 600; font-size: 14px; }
+.user-role { font-size: 12px; color: #6B7280; }
+.content { padding: 32px; flex: 1; }
+
+.banner { background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 8px; padding: 14px 18px; display: flex; gap: 12px; align-items: flex-start; margin-bottom: 24px; color: #1E40AF; font-size: 14px; }
+.banner-icon { flex-shrink: 0; width: 18px; height: 18px; color: #3B82F6; font-weight: bold; }
+
+.card { background: white; border: 1px solid #E5E7EB; border-radius: 8px; padding: 24px; margin-bottom: 20px; }
+.card-title { font-size: 16px; font-weight: 600; margin-bottom: 16px; color: #111827; }
+
+.field { margin-bottom: 20px; }
+.label { display: block; font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 6px; }
+.req { color: #EF4444; }
+.input, .select { width: 100%; padding: 10px 12px; border: 1px solid #D1D5DB; border-radius: 6px; font-size: 14px; font-family: inherit; background: white; }
+.input:focus, .select:focus { outline: none; border-color: #3B82F6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+
+.tag-input { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px; border: 1px solid #D1D5DB; border-radius: 6px; min-height: 42px; align-items: center; cursor: text; }
+.tag { background: #DBEAFE; color: #1E40AF; padding: 4px 10px; border-radius: 4px; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; }
+.tag-x { cursor: pointer; opacity: 0.6; font-size: 14px; }
+
+.radio-card { border: 2px solid #E5E7EB; border-radius: 8px; padding: 14px 16px; cursor: pointer; margin-bottom: 8px; transition: all 0.15s; }
+.radio-card:hover { border-color: #93C5FD; }
+.radio-card.selected { border-color: #3B82F6; background: #EFF6FF; }
+.radio-card-title { font-weight: 600; font-size: 14px; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
+.radio-card-desc { font-size: 12px; color: #6B7280; }
+
+.btn { padding: 10px 20px; border-radius: 6px; font-size: 14px; font-weight: 500; cursor: pointer; border: none; font-family: inherit; }
+.btn-primary { background: #3B82F6; color: white; }
+.btn-primary:hover { background: #2563EB; }
+.btn-secondary { background: white; color: #374151; border: 1px solid #D1D5DB; }
+.btn-secondary:hover { background: #F9FAFB; }
+.btn-danger { background: white; color: #EF4444; border: 1px solid #FCA5A5; }
+.btn-disabled { background: #E5E7EB; color: #9CA3AF; cursor: not-allowed; }
+
+.actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px; padding-top: 20px; border-top: 1px solid #E5E7EB; }
+
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.grid-2-3 { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+
+.pill { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+.pill-info { background: #DBEAFE; color: #1E40AF; }
+
+.subtle { color: #6B7280; font-size: 13px; }
+.summary-row { padding: 10px 0; }
+.summary-label { font-size: 12px; color: #6B7280; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 500; }
+.summary-value { font-size: 14px; font-weight: 500; color: #111827; margin-top: 2px; }
+
+.step-row { display: flex; align-items: center; padding: 14px 0; border-bottom: 1px solid #F3F4F6; }
+.step-row:last-child { border-bottom: none; }
+.step-icon { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-right: 14px; font-size: 14px; font-weight: 600; }
+.step-done { background: #D1FAE5; color: #065F46; }
+.step-active { background: #FEF3C7; color: #92400E; }
+.step-pending { background: #F3F4F6; color: #9CA3AF; }
+.step-label { flex: 1; font-size: 14px; color: #374151; }
+.step-status { font-size: 13px; font-weight: 500; }
+
+.progress-bar { height: 8px; background: #E5E7EB; border-radius: 4px; overflow: hidden; margin: 16px 0 6px; }
+.progress-fill { height: 100%; background: #3B82F6; transition: width 0.3s; }
+.progress-text { text-align: center; font-size: 13px; color: #6B7280; }
+
+.timeline-item { display: flex; gap: 12px; padding: 10px 0; }
+.timeline-dot { width: 10px; height: 10px; border-radius: 50%; margin-top: 6px; flex-shrink: 0; }
+.timeline-title { font-size: 14px; font-weight: 500; color: #111827; }
+.timeline-meta { font-size: 12px; color: #6B7280; margin-top: 2px; }
+
+.request-id-box { margin-top: 16px; padding-top: 16px; border-top: 1px solid #F3F4F6; }
+.request-id-value { font-family: 'SF Mono', 'Monaco', monospace; font-weight: 600; margin-top: 4px; color: #111827; }
+
+.screen { display: none; }
+.screen.active { display: block; }
+</style>
+</head>
+<body>
+
+<div class="story-bar">
+  <span class="req-id">REQ-BP1-1</span>
+  <h1>Initiate Budget Forecast Request</h1>
+  <div class="toggle-group">
+    <button class="toggle-btn active" data-mode="input">📝 Input Screen</button>
+    <button class="toggle-btn" data-mode="output">📊 Output Screen</button>
+  </div>
+</div>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">AI Budget &<br>Forecast</div>
+    <div class="nav-item"><span class="nav-icon">⊞</span> Dashboard</div>
+    <div class="nav-item active"><span class="nav-icon">↗</span> Generate Forecast</div>
+    <div class="nav-item"><span class="nav-icon">💡</span> Explain Prediction (XAI)</div>
+    <div class="nav-item"><span class="nav-icon">∿</span> Spending Patterns</div>
+    <div class="nav-item"><span class="nav-icon">📊</span> Variance Reports</div>
+    <div class="nav-item"><span class="nav-icon">◐</span> Data Quality</div>
+    <div class="nav-item"><span class="nav-icon">🗄</span> Model Management</div>
+    <div class="nav-item"><span class="nav-icon">⚙</span> Settings</div>
+  </aside>
+
+  <div class="main">
+    <div class="header">
+      <div class="header-left">
+        <h2 id="screenTitle">Initiate Budget Forecast</h2>
+        <p id="screenSubtitle">Step 1 of 2 — Define forecast parameters</p>
+      </div>
+      <div class="header-right">
+        <span class="bell">🔔</span>
+        <div class="user-chip">
+          <div class="avatar">JS</div>
+          <div>
+            <div class="user-name">John Smith</div>
+            <div class="user-role">Financial Analyst</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- INPUT SCREEN -->
+      <div class="screen active" id="inputScreen">
+        <div class="banner">
+          <span class="banner-icon">ⓘ</span>
+          <div>AI will use historical data to predict future budget outcomes. Configure parameters below to start.</div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Forecast Parameters</div>
+
+          <div class="field">
+            <label class="label">Forecast Name <span class="req">*</span></label>
+            <input class="input" placeholder="e.g., Q1 2026 Marketing Budget">
+          </div>
+
+          <div class="field">
+            <label class="label">Department Scope <span class="req">*</span></label>
+            <div class="tag-input">
+              <span class="tag">Marketing <span class="tag-x">×</span></span>
+              <span class="tag">Sales <span class="tag-x">×</span></span>
+              <span style="color: #9CA3AF; font-size: 13px;">Add departments...</span>
+            </div>
+            <div class="subtle" style="margin-top: 6px; font-size: 12px;">Select one or more departments to forecast</div>
+          </div>
+
+          <div class="grid-2">
+            <div class="field">
+              <label class="label">Forecast Horizon <span class="req">*</span></label>
+              <select class="select">
+                <option>Monthly</option>
+                <option>Quarterly</option>
+                <option>Yearly</option>
+              </select>
+            </div>
+            <div class="field">
+              <label class="label">Historical Data Range <span class="req">*</span></label>
+              <select class="select">
+                <option>Last 3 Years</option>
+                <option>Last 2 Years</option>
+                <option>Last 1 Year</option>
+                <option>Custom Range...</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="label">Forecasting Method <span class="req">*</span></label>
+            <div class="radio-card selected">
+              <div class="radio-card-title">
+                <span>● ML Ensemble</span>
+                <span class="pill pill-info">Recommended</span>
+              </div>
+              <div class="radio-card-desc">Combines multiple models (XGBoost, Neural Network, Random Forest) for highest accuracy</div>
+            </div>
+            <div class="radio-card">
+              <div class="radio-card-title"><span>○ Deep Learning</span></div>
+              <div class="radio-card-desc">LSTM neural network — best for complex temporal patterns</div>
+            </div>
+            <div class="radio-card">
+              <div class="radio-card-title"><span>○ Time Series</span></div>
+              <div class="radio-card-desc">ARIMA-based traditional forecasting — fast and interpretable</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="btn btn-secondary">Cancel</button>
+          <button class="btn btn-primary">Continue to Review →</button>
+        </div>
+      </div>
+
+      <!-- OUTPUT SCREEN -->
+      <div class="screen" id="outputScreen">
+        <div class="grid-2-3">
+          <div>
+            <div class="card">
+              <div class="card-title">Review Parameters</div>
+              <div class="grid-2" style="gap: 8px;">
+                <div class="summary-row">
+                  <div class="summary-label">Forecast Name</div>
+                  <div class="summary-value">Q1 2026 Marketing Budget</div>
+                </div>
+                <div class="summary-row">
+                  <div class="summary-label">Department Scope</div>
+                  <div class="summary-value">Marketing, Sales</div>
+                </div>
+                <div class="summary-row">
+                  <div class="summary-label">Forecasting Method</div>
+                  <div class="summary-value">ML Ensemble</div>
+                </div>
+                <div class="summary-row">
+                  <div class="summary-label">Historical Data</div>
+                  <div class="summary-value">Last 3 Years</div>
+                </div>
+                <div class="summary-row">
+                  <div class="summary-label">Forecast Horizon</div>
+                  <div class="summary-value">Monthly</div>
+                </div>
+                <div class="summary-row">
+                  <div class="summary-label">Estimated Time</div>
+                  <div class="summary-value">~2 minutes</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-title">Processing Progress</div>
+              <div class="step-row">
+                <div class="step-icon step-done">✓</div>
+                <div class="step-label">Step 1: Parameters validated</div>
+                <div class="step-status" style="color: #10B981;">Completed</div>
+              </div>
+              <div class="step-row">
+                <div class="step-icon step-active">⏱</div>
+                <div class="step-label">Step 2: Data preprocessing</div>
+                <div class="step-status" style="color: #F59E0B;">In Progress...</div>
+              </div>
+              <div class="step-row">
+                <div class="step-icon step-pending">3</div>
+                <div class="step-label" style="color: #9CA3AF;">Step 3: Model training</div>
+                <div class="step-status" style="color: #9CA3AF;">Pending</div>
+              </div>
+              <div class="step-row">
+                <div class="step-icon step-pending">4</div>
+                <div class="step-label" style="color: #9CA3AF;">Step 4: Forecast ready</div>
+                <div class="step-status" style="color: #9CA3AF;">Pending</div>
+              </div>
+              <div class="progress-bar"><div class="progress-fill" style="width: 50%"></div></div>
+              <div class="progress-text">50% Complete</div>
+            </div>
+          </div>
+
+          <div>
+            <div class="card">
+              <div class="card-title">Recent Activity</div>
+              <div class="timeline-item">
+                <div class="timeline-dot" style="background: #3B82F6;"></div>
+                <div>
+                  <div class="timeline-title">Forecast request submitted</div>
+                  <div class="timeline-meta">by John Smith at 14:32</div>
+                </div>
+              </div>
+              <div class="timeline-item">
+                <div class="timeline-dot" style="background: #10B981;"></div>
+                <div>
+                  <div class="timeline-title">Parameters validated</div>
+                  <div class="timeline-meta">System at 14:32</div>
+                </div>
+              </div>
+              <div class="timeline-item">
+                <div class="timeline-dot" style="background: #F59E0B;"></div>
+                <div>
+                  <div class="timeline-title">Data preprocessing started</div>
+                  <div class="timeline-meta">System at 14:33</div>
+                </div>
+              </div>
+
+              <div class="request-id-box">
+                <div class="summary-label">Request ID</div>
+                <div class="request-id-value">FRC-2026-04-30-1432</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="btn btn-danger">Cancel Request</button>
+          <button class="btn btn-secondary">Edit Parameters</button>
+          <button class="btn btn-disabled">View Forecast Results</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+const titles = {
+  input: { t: 'Initiate Budget Forecast', s: 'Step 1 of 2 — Define forecast parameters' },
+  output: { t: 'Forecast Request Confirmed', s: 'Step 2 of 2 — Review parameters' }
+};
+document.querySelectorAll('.toggle-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const mode = btn.dataset.mode;
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(mode + 'Screen').classList.add('active');
+    document.getElementById('screenTitle').textContent = titles[mode].t;
+    document.getElementById('screenSubtitle').textContent = titles[mode].s;
+  });
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>REQ-BP2-4 — Model Monitoring</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: #F3F4F6; color: #111827; font-size: 14px; }
+
+.story-bar { position: fixed; top: 0; left: 0; right: 0; background: #1F2937; color: #F9FAFB; padding: 10px 24px; z-index: 100; display: flex; align-items: center; gap: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+.story-bar h1 { font-size: 14px; font-weight: 600; }
+.story-bar .req-id { background: #3B82F6; padding: 4px 10px; border-radius: 4px; font-size: 12px; font-weight: 600; }
+.toggle-group { display: flex; background: #374151; border-radius: 6px; padding: 2px; margin-left: auto; }
+.toggle-btn { background: transparent; color: #D1D5DB; border: none; padding: 6px 16px; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: 500; }
+.toggle-btn.active { background: #3B82F6; color: white; }
+
+.app { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; padding-top: 56px; }
+
+.sidebar { background: white; border-right: 1px solid #E5E7EB; padding: 24px 0; height: calc(100vh - 56px); position: sticky; top: 56px; overflow-y: auto; }
+.brand { padding: 0 24px 24px; font-size: 18px; font-weight: 700; color: #111827; line-height: 1.3; border-bottom: 1px solid #F3F4F6; margin-bottom: 12px; }
+.nav-item { display: flex; align-items: center; gap: 12px; padding: 10px 24px; color: #6B7280; font-size: 14px; font-weight: 500; border-left: 3px solid transparent; cursor: pointer; }
+.nav-item:hover { background: #F9FAFB; }
+.nav-item.active { background: #EFF6FF; color: #3B82F6; border-left-color: #3B82F6; }
+.nav-icon { width: 18px; flex-shrink: 0; font-size: 16px; }
+
+.main { display: flex; flex-direction: column; background: #F9FAFB; }
+.header { background: white; border-bottom: 1px solid #E5E7EB; padding: 16px 32px; display: flex; justify-content: space-between; align-items: center; }
+.header-left h2 { font-size: 18px; font-weight: 600; color: #111827; }
+.header-left p { font-size: 13px; color: #6B7280; margin-top: 2px; }
+.header-right { display: flex; align-items: center; gap: 16px; }
+.bell { width: 20px; height: 20px; color: #6B7280; position: relative; cursor: pointer; }
+.bell::after { content: ''; position: absolute; top: 0; right: 0; width: 8px; height: 8px; background: #3B82F6; border-radius: 50%; border: 2px solid white; }
+.user-chip { display: flex; align-items: center; gap: 10px; }
+.avatar { width: 36px; height: 36px; border-radius: 50%; background: #DBEAFE; color: #3B82F6; display: flex; align-items: center; justify-content: center; font-weight: 600; }
+.user-name { font-weight: 600; font-size: 14px; }
+.user-role { font-size: 12px; color: #6B7280; }
+.content { padding: 32px; flex: 1; }
+
+.banner { background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 8px; padding: 14px 18px; display: flex; gap: 12px; align-items: flex-start; margin-bottom: 24px; color: #1E40AF; font-size: 14px; }
+.banner-icon { flex-shrink: 0; font-weight: bold; }
+
+.card { background: white; border: 1px solid #E5E7EB; border-radius: 8px; padding: 24px; margin-bottom: 20px; }
+.card-title { font-size: 16px; font-weight: 600; margin-bottom: 16px; color: #111827; display: flex; align-items: center; gap: 8px; }
+
+.field { margin-bottom: 20px; }
+.label { display: block; font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 6px; }
+.req { color: #EF4444; }
+.input, .select, .textarea { width: 100%; padding: 10px 12px; border: 1px solid #D1D5DB; border-radius: 6px; font-size: 14px; font-family: inherit; background: white; }
+.input:focus, .select:focus, .textarea:focus { outline: none; border-color: #3B82F6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+.textarea { resize: vertical; min-height: 80px; }
+.help { font-size: 12px; color: #6B7280; margin-top: 4px; }
+
+.tag-input { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px; border: 1px solid #D1D5DB; border-radius: 6px; min-height: 42px; align-items: center; }
+.tag { background: #DBEAFE; color: #1E40AF; padding: 4px 10px; border-radius: 4px; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; }
+.tag-x { cursor: pointer; opacity: 0.6; }
+
+.radio-card { border: 2px solid #E5E7EB; border-radius: 8px; padding: 14px 16px; cursor: pointer; margin-bottom: 8px; transition: all 0.15s; }
+.radio-card:hover { border-color: #93C5FD; }
+.radio-card.selected { border-color: #3B82F6; background: #EFF6FF; }
+.radio-card-title { font-weight: 600; font-size: 14px; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; justify-content: space-between; }
+.radio-card-desc { font-size: 12px; color: #6B7280; }
+
+.btn { padding: 10px 20px; border-radius: 6px; font-size: 14px; font-weight: 500; cursor: pointer; border: none; font-family: inherit; }
+.btn-primary { background: #3B82F6; color: white; }
+.btn-primary:hover { background: #2563EB; }
+.btn-secondary { background: white; color: #374151; border: 1px solid #D1D5DB; }
+.btn-secondary:hover { background: #F9FAFB; }
+.btn-danger { background: white; color: #EF4444; border: 1px solid #FCA5A5; }
+.btn-success { background: #10B981; color: white; }
+.btn-warning { background: #F59E0B; color: white; }
+.btn-text { background: transparent; color: #3B82F6; padding: 10px 12px; }
+.btn-disabled { background: #E5E7EB; color: #9CA3AF; cursor: not-allowed; }
+
+.actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px; padding-top: 20px; border-top: 1px solid #E5E7EB; }
+
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+.grid-2-3 { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+
+.kpi { background: white; border: 1px solid #E5E7EB; border-radius: 8px; padding: 18px; }
+.kpi-label { font-size: 12px; color: #6B7280; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
+.kpi-value { font-size: 24px; font-weight: 700; color: #111827; margin-top: 6px; }
+.kpi-trend { font-size: 12px; margin-top: 4px; color: #6B7280; }
+.kpi-trend.up { color: #10B981; }
+.kpi-trend.down { color: #EF4444; }
+
+.pill { display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 500; }
+.pill-success { background: #D1FAE5; color: #065F46; }
+.pill-warning { background: #FEF3C7; color: #92400E; }
+.pill-danger { background: #FEE2E2; color: #991B1B; }
+.pill-info { background: #DBEAFE; color: #1E40AF; }
+.pill-neutral { background: #F3F4F6; color: #4B5563; }
+
+.subtle { color: #6B7280; font-size: 13px; }
+.summary-row { padding: 10px 0; }
+.summary-label { font-size: 12px; color: #6B7280; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 500; }
+.summary-value { font-size: 14px; font-weight: 500; color: #111827; margin-top: 2px; }
+
+.muted-card { background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 8px; padding: 16px; }
+
+.toggle { position: relative; width: 40px; height: 22px; background: #D1D5DB; border-radius: 11px; cursor: pointer; transition: background 0.2s; }
+.toggle.on { background: #3B82F6; }
+.toggle::after { content: ''; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; background: white; border-radius: 50%; transition: transform 0.2s; }
+.toggle.on::after { transform: translateX(18px); }
+.toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; }
+
+.slider-row { display: flex; align-items: center; gap: 12px; }
+.slider-row input[type=range] { flex: 1; }
+.slider-value { font-weight: 600; min-width: 60px; text-align: right; }
+
+.checkbox-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; font-size: 14px; }
+.checkbox-row input { width: 16px; height: 16px; cursor: pointer; }
+
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { text-align: left; padding: 10px 12px; background: #F9FAFB; color: #6B7280; font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #E5E7EB; }
+td { padding: 12px; border-bottom: 1px solid #F3F4F6; color: #111827; }
+tbody tr:hover { background: #F9FAFB; }
+
+.chart { background: linear-gradient(180deg, #F9FAFB 0%, white 100%); border: 1px dashed #D1D5DB; border-radius: 6px; padding: 16px; min-height: 240px; display: flex; align-items: center; justify-content: center; position: relative; }
+.chart svg { width: 100%; height: 100%; }
+
+.ai-card { background: linear-gradient(135deg, #EFF6FF 0%, #F0F9FF 100%); border: 1px solid #BFDBFE; border-radius: 8px; padding: 20px; margin-bottom: 20px; }
+.ai-icon { display: inline-flex; width: 24px; height: 24px; background: #3B82F6; color: white; border-radius: 6px; align-items: center; justify-content: center; font-size: 14px; margin-right: 8px; vertical-align: middle; }
+
+.bar-row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; font-size: 13px; }
+.bar-label { min-width: 130px; }
+.bar-track { flex: 1; height: 22px; background: #F3F4F6; border-radius: 4px; overflow: hidden; }
+.bar-fill { height: 100%; background: #3B82F6; display: flex; align-items: center; padding: 0 8px; color: white; font-size: 11px; font-weight: 600; }
+.bar-value { min-width: 60px; text-align: right; font-weight: 600; }
+
+.cluster-card { border-top: 4px solid #3B82F6; background: white; border: 1px solid #E5E7EB; border-radius: 8px; padding: 16px; }
+.cluster-card.c1 { border-top: 4px solid #3B82F6; }
+.cluster-card.c2 { border-top: 4px solid #10B981; }
+.cluster-card.c3 { border-top: 4px solid #F59E0B; }
+.cluster-card.c4 { border-top: 4px solid #EF4444; }
+
+.callout { display: flex; gap: 12px; padding: 14px 16px; background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 8px; margin-bottom: 8px; }
+.callout-icon { width: 32px; height: 32px; background: #F59E0B; color: white; border-radius: 6px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 16px; }
+
+.timeline-item { display: flex; gap: 12px; padding: 10px 0; }
+.timeline-dot { width: 10px; height: 10px; border-radius: 50%; margin-top: 6px; flex-shrink: 0; }
+.timeline-title { font-size: 14px; font-weight: 500; color: #111827; }
+.timeline-meta { font-size: 12px; color: #6B7280; margin-top: 2px; }
+
+.legend { display: flex; gap: 16px; font-size: 12px; color: #6B7280; flex-wrap: wrap; }
+.legend-item { display: flex; align-items: center; gap: 6px; }
+.legend-dot { width: 10px; height: 10px; border-radius: 2px; }
+
+.gauge { width: 90px; height: 90px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 12px auto 4px; }
+.gauge-inner { width: 70px; height: 70px; background: white; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.gauge-value { font-size: 18px; font-weight: 700; color: #111827; }
+.gauge-label { font-size: 11px; color: #6B7280; }
+
+.heatmap-grid { display: grid; gap: 2px; }
+.heatmap-cell { aspect-ratio: 1; border-radius: 2px; }
+
+.breadcrumb { font-size: 13px; color: #6B7280; margin-bottom: 8px; }
+.breadcrumb a { color: #3B82F6; text-decoration: none; }
+
+.fab { position: fixed; bottom: 24px; right: 24px; background: #3B82F6; color: white; padding: 14px 20px; border-radius: 999px; font-size: 14px; font-weight: 500; cursor: pointer; box-shadow: 0 4px 12px rgba(59,130,246,0.4); display: flex; align-items: center; gap: 8px; }
+
+.screen { display: none; }
+.screen.active { display: block; }
+</style>
+</head>
+<body>
+
+<div class="story-bar">
+  <span class="req-id">REQ-BP2-4</span>
+  <h1>Model Monitoring</h1>
+  <div class="toggle-group">
+    <button class="toggle-btn active" data-mode="input">📝 Input Screen</button>
+    <button class="toggle-btn" data-mode="output">📊 Output Screen</button>
+  </div>
+</div>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">AI Budget &amp;<br>Forecast</div>
+    <div class="nav-item"><span class="nav-icon">⊞</span> Dashboard</div>
+    <div class="nav-item"><span class="nav-icon">↗</span> Generate Forecast</div>
+    <div class="nav-item"><span class="nav-icon">💡</span> Explain Prediction (XAI)</div>
+    <div class="nav-item"><span class="nav-icon">∿</span> Spending Patterns</div>
+    <div class="nav-item"><span class="nav-icon">📊</span> Variance Reports</div>
+    <div class="nav-item"><span class="nav-icon">◐</span> Data Quality</div>
+    <div class="nav-item active"><span class="nav-icon">🗄</span> Model Management</div>
+    <div class="nav-item"><span class="nav-icon">⚙</span> Settings</div>
+  </aside>
+
+  <div class="main">
+    <div class="header">
+      <div class="header-left">
+        <h2 id="screenTitle">Configure Model Monitoring</h2>
+        <p id="screenSubtitle">Set thresholds and alerts for explanation quality over time</p>
+      </div>
+      <div class="header-right">
+        <span class="bell">🔔</span>
+        <div class="user-chip">
+          <div class="avatar">JS</div>
+          <div>
+            <div class="user-name">John Smith</div>
+            <div class="user-role">Financial Analyst</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="screen active" id="inputScreen">
+
+<div class="banner">
+  <span class="banner-icon">ⓘ</span>
+  <div>Configure thresholds for interpretability metrics. The system will alert you when models drift or explanations degrade.</div>
+</div>
+<div class="card">
+  <div class="card-title">🎯 Models to Monitor</div>
+  <table>
+    <thead><tr><th></th><th>Model</th><th>Version</th><th>Deployed</th><th>Accuracy</th><th>Interpretability</th></tr></thead>
+    <tbody>
+      <tr><td><input type="checkbox" checked></td><td><strong>LSTM_v2</strong></td><td>2.3.1</td><td>15 Mar 2026</td><td><span class="pill pill-success">94.3%</span></td><td><span class="pill pill-success">0.91</span></td></tr>
+      <tr><td><input type="checkbox" checked></td><td><strong>XGBoost_v1</strong></td><td>1.8.0</td><td>22 Feb 2026</td><td><span class="pill pill-success">92.1%</span></td><td><span class="pill pill-warning">0.84</span></td></tr>
+      <tr><td><input type="checkbox" checked></td><td><strong>RandomForest_v3</strong></td><td>3.0.2</td><td>10 Apr 2026</td><td><span class="pill pill-warning">89.2%</span></td><td><span class="pill pill-warning">0.78</span></td></tr>
+      <tr><td><input type="checkbox" checked></td><td><strong>Ensemble_main</strong></td><td>2.0.0</td><td>20 Apr 2026</td><td><span class="pill pill-success">95.1%</span></td><td><span class="pill pill-success">0.89</span></td></tr>
+      <tr><td><input type="checkbox"></td><td><strong>Neural_exp</strong> <span class="pill pill-neutral" style="font-size: 10px;">Experimental</span></td><td>0.9.1</td><td>25 Apr 2026</td><td><span class="pill pill-warning">87.4%</span></td><td><span class="pill pill-danger">0.65</span></td></tr>
+    </tbody>
+  </table>
+</div>
+<div class="card">
+  <div class="card-title">⚠ Metrics & Thresholds</div>
+  <table>
+    <thead><tr><th>Metric</th><th>Current</th><th>Warning</th><th>Critical</th><th>Direction</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Explanation Stability</strong><div class="subtle">SHAP variance over time</div></td><td><span style="font-weight: 600;">0.91</span></td><td><input class="input" value="0.85" style="width: 80px;"></td><td><input class="input" value="0.75" style="width: 80px;"></td><td><span class="subtle">Below threshold</span></td></tr>
+      <tr><td><strong>Feature Importance Drift</strong><div class="subtle">% change vs baseline</div></td><td><span style="font-weight: 600;">8%</span></td><td><input class="input" value="15%" style="width: 80px;"></td><td><input class="input" value="25%" style="width: 80px;"></td><td><span class="subtle">Above threshold</span></td></tr>
+      <tr><td><strong>Prediction-Explanation Consistency</strong><div class="subtle">Match between SHAP and LIME</div></td><td><span style="font-weight: 600;">92%</span></td><td><input class="input" value="90%" style="width: 80px;"></td><td><input class="input" value="80%" style="width: 80px;"></td><td><span class="subtle">Below threshold</span></td></tr>
+      <tr><td><strong>Model Accuracy (MAPE)</strong><div class="subtle">Prediction error rate</div></td><td><span style="font-weight: 600;">5.7%</span></td><td><input class="input" value="10%" style="width: 80px;"></td><td><input class="input" value="20%" style="width: 80px;"></td><td><span class="subtle">Above threshold</span></td></tr>
+      <tr><td><strong>Concept Drift Indicator</strong><div class="subtle">Data distribution shift</div></td><td><span style="font-weight: 600;">0.12</span></td><td><input class="input" value="0.20" style="width: 80px;"></td><td><input class="input" value="0.40" style="width: 80px;"></td><td><span class="subtle">Above threshold</span></td></tr>
+    </tbody>
+  </table>
+</div>
+<div class="grid-2">
+  <div class="card">
+    <div class="card-title">⏱ Monitoring Frequency</div>
+    <div class="radio-card selected">
+      <div class="radio-card-title"><span>● Continuous</span></div>
+      <div class="radio-card-desc">Real-time monitoring (recommended)</div>
+    </div>
+    <div class="radio-card">
+      <div class="radio-card-title"><span>○ Daily</span></div>
+      <div class="radio-card-desc">Run once at midnight UTC</div>
+    </div>
+    <div class="radio-card">
+      <div class="radio-card-title"><span>○ Weekly</span></div>
+      <div class="radio-card-desc">Every Monday at 09:00</div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">🚨 Auto-Actions on Threshold Breach</div>
+    <div class="toggle-row"><div><div style="font-weight: 500;">Email alert</div><div class="subtle">john.smith@nyota.com</div></div><div class="toggle on"></div></div>
+    <div class="toggle-row"><div><div style="font-weight: 500;">Slack notification</div><div class="subtle">#ai-monitoring channel</div></div><div class="toggle on"></div></div>
+    <div class="toggle-row"><div><div style="font-weight: 500;">Auto-trigger retraining</div><div class="subtle">On critical breaches only</div></div><div class="toggle"></div></div>
+    <div class="toggle-row"><div><div style="font-weight: 500;">Pause forecast generation</div><div class="subtle">Until issue resolved</div></div><div class="toggle on"></div></div>
+    <div class="toggle-row"><div><div style="font-weight: 500;">Lock affected forecasts</div><div class="subtle">Pending manual review</div></div><div class="toggle on"></div></div>
+  </div>
+</div>
+<div class="actions">
+  <button class="btn btn-secondary">Cancel</button>
+  <button class="btn btn-primary">Save Monitoring Configuration →</button>
+</div>
+
+      </div>
+      <div class="screen" id="outputScreen">
+
+<div style="display: flex; gap: 8px; margin-bottom: 20px;"><span class="pill pill-warning">⚠ 2 models need attention</span><span class="subtle">Continuous monitoring active · Last evaluated 2 minutes ago</span></div>
+<div class="grid-4">
+  <div class="kpi"><div class="kpi-label">Models Deployed</div><div class="kpi-value">6</div><div class="kpi-trend">5 active · 1 experimental</div></div>
+  <div class="kpi"><div class="kpi-label">Healthy Models</div><div class="kpi-value" style="color: #10B981;">4</div><div class="kpi-trend up">All thresholds OK</div></div>
+  <div class="kpi"><div class="kpi-label">Models with Warnings</div><div class="kpi-value" style="color: #F59E0B;">2</div><div class="kpi-trend">Need investigation</div></div>
+  <div class="kpi"><div class="kpi-label">Critical Issues</div><div class="kpi-value" style="color: #6B7280;">0</div><div class="kpi-trend">Last 24h: 0</div></div>
+</div>
+<div class="grid-2-3">
+  <div class="card">
+    <div class="card-title">Model Status</div>
+    <table>
+      <thead><tr><th>Model</th><th>Status</th><th>Accuracy</th><th>Interp.</th><th>Last Check</th><th></th></tr></thead>
+      <tbody>
+        <tr><td><strong>LSTM_v2</strong><div class="subtle">v2.3.1</div></td><td><span class="pill pill-warning">⚠ Drift</span></td><td>94.3%</td><td>0.91</td><td>2m ago</td><td><button class="btn btn-secondary" style="padding: 4px 10px; font-size: 11px;">View</button></td></tr>
+        <tr><td><strong>XGBoost_v1</strong><div class="subtle">v1.8.0</div></td><td><span class="pill pill-success">✓ Healthy</span></td><td>92.1%</td><td>0.84</td><td>2m ago</td><td><button class="btn btn-secondary" style="padding: 4px 10px; font-size: 11px;">View</button></td></tr>
+        <tr><td><strong>RandomForest_v3</strong><div class="subtle">v3.0.2</div></td><td><span class="pill pill-warning">⚠ Stability</span></td><td>89.2%</td><td>0.78</td><td>2m ago</td><td><button class="btn btn-warning" style="padding: 4px 10px; font-size: 11px;">Retrain</button></td></tr>
+        <tr><td><strong>Ensemble_main</strong><div class="subtle">v2.0.0</div></td><td><span class="pill pill-success">✓ Healthy</span></td><td>95.1%</td><td>0.89</td><td>2m ago</td><td><button class="btn btn-secondary" style="padding: 4px 10px; font-size: 11px;">View</button></td></tr>
+        <tr><td><strong>Prophet_v2</strong><div class="subtle">v2.1.0</div></td><td><span class="pill pill-success">✓ Healthy</span></td><td>87.5%</td><td>0.86</td><td>2m ago</td><td><button class="btn btn-secondary" style="padding: 4px 10px; font-size: 11px;">View</button></td></tr>
+        <tr><td><strong>Neural_exp</strong><div class="subtle">v0.9.1</div></td><td><span class="pill pill-success">✓ Healthy</span></td><td>87.4%</td><td>0.65</td><td>2m ago</td><td><button class="btn btn-secondary" style="padding: 4px 10px; font-size: 11px;">View</button></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="card">
+    <div class="card-title">🔔 Recent Alerts</div>
+    <div class="timeline-item"><div class="timeline-dot" style="background: #F59E0B;"></div><div><div class="timeline-title" style="font-size: 13px;">LSTM_v2 — Feature drift</div><div class="timeline-meta">Vendor Concentration drifted 16% (warn 15%)</div><div class="subtle" style="margin-top: 2px;">2 min ago</div></div></div>
+    <div class="timeline-item"><div class="timeline-dot" style="background: #F59E0B;"></div><div><div class="timeline-title" style="font-size: 13px;">RandomForest_v3 — Stability</div><div class="timeline-meta">Score dropped to 0.82 (warn 0.85)</div><div class="subtle" style="margin-top: 2px;">15 min ago</div></div></div>
+    <div class="timeline-item"><div class="timeline-dot" style="background: #3B82F6;"></div><div><div class="timeline-title" style="font-size: 13px;">Ensemble_main — Retrained</div><div class="timeline-meta">Accuracy improved to 95.1%</div><div class="subtle" style="margin-top: 2px;">3 hours ago</div></div></div>
+    <div class="timeline-item"><div class="timeline-dot" style="background: #10B981;"></div><div><div class="timeline-title" style="font-size: 13px;">XGBoost_v1 — Recovery</div><div class="timeline-meta">All metrics back to normal</div><div class="subtle" style="margin-top: 2px;">6 hours ago</div></div></div>
+  </div>
+</div>
+<div class="card">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+    <div class="card-title" style="margin: 0;">Interpretability Trends — LSTM_v2</div>
+    <div style="display: flex; gap: 6px;">
+      <button class="btn btn-secondary" style="padding: 4px 10px; font-size: 11px;">24h</button>
+      <button class="btn btn-primary" style="padding: 4px 10px; font-size: 11px;">7d</button>
+      <button class="btn btn-secondary" style="padding: 4px 10px; font-size: 11px;">30d</button>
+      <button class="btn btn-secondary" style="padding: 4px 10px; font-size: 11px;">90d</button>
+    </div>
+  </div>
+  <div class="chart" style="min-height: 240px;">
+    <svg viewBox="0 0 600 200">
+      <g stroke="#E5E7EB" stroke-width="0.5"><line x1="40" y1="40" x2="580" y2="40"/><line x1="40" y1="100" x2="580" y2="100"/><line x1="40" y1="160" x2="580" y2="160"/></g>
+      <line x1="40" y1="80" x2="580" y2="80" stroke="#F59E0B" stroke-dasharray="4,3" stroke-width="1"/>
+      <text x="585" y="83" font-size="9" fill="#F59E0B">Warn</text>
+      <line x1="40" y1="140" x2="580" y2="140" stroke="#EF4444" stroke-dasharray="4,3" stroke-width="1"/>
+      <text x="585" y="143" font-size="9" fill="#EF4444">Critical</text>
+      <path d="M40,60 L120,55 L200,52 L280,58 L360,62 L440,68 L520,75 L580,82" stroke="#3B82F6" stroke-width="2" fill="none"/>
+      <path d="M40,50 L120,48 L200,55 L280,60 L360,65 L440,70 L520,68 L580,72" stroke="#10B981" stroke-width="2" fill="none"/>
+      <path d="M40,70 L120,65 L200,60 L280,65 L360,70 L440,75 L520,80 L580,85" stroke="#8B5CF6" stroke-width="2" fill="none"/>
+      <text x="40" y="180" font-size="10" fill="#9CA3AF">Apr 24</text><text x="200" y="180" font-size="10" fill="#9CA3AF">Apr 26</text><text x="360" y="180" font-size="10" fill="#9CA3AF">Apr 28</text><text x="540" y="180" font-size="10" fill="#9CA3AF">Apr 30</text>
+    </svg>
+  </div>
+  <div class="legend" style="margin-top: 12px;">
+    <div class="legend-item"><div class="legend-dot" style="background: #3B82F6;"></div>Stability Score</div>
+    <div class="legend-item"><div class="legend-dot" style="background: #10B981;"></div>Consistency</div>
+    <div class="legend-item"><div class="legend-dot" style="background: #8B5CF6;"></div>Feature Drift</div>
+  </div>
+</div>
+<div class="ai-card">
+  <div style="font-weight: 600; margin-bottom: 12px;"><span class="ai-icon">✨</span>Recommended Actions</div>
+  <ul style="margin-left: 20px; line-height: 1.8; font-size: 14px; color: #1E3A8A;">
+    <li><strong>Consider retraining LSTM_v2</strong> — feature drift in Vendor Concentration suggests underlying spending patterns have shifted. Recommended within 7 days.</li>
+    <li><strong>Review Q1 forecasts generated by RandomForest_v3</strong> — declining stability score may have affected 3 recent forecasts. Lock and review.</li>
+    <li><strong>Schedule baseline refresh</strong> — feature importance baselines are 60+ days old. Refresh recommended monthly.</li>
+  </ul>
+</div>
+<div class="actions">
+  <button class="btn btn-secondary">Configure Monitoring</button>
+  <button class="btn btn-warning">⟲ Trigger Retraining</button>
+  <button class="btn btn-primary">Generate Report →</button>
+</div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const titles = {
+  input: { t: 'Configure Model Monitoring', s: 'Set thresholds and alerts for explanation quality over time' },
+  output: { t: 'Model Health Dashboard', s: 'Last evaluated 2 minutes ago · Auto-refresh: 5min' }
+};
+document.querySelectorAll('.toggle-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const mode = btn.dataset.mode;
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(mode + 'Screen').classList.add('active');
+    document.getElementById('screenTitle').textContent = titles[mode].t;
+    document.getElementById('screenSubtitle').textContent = titles[mode].s;
+    window.scrollTo(0,0);
+  });
+});
+</script>
+</body>
+</html>

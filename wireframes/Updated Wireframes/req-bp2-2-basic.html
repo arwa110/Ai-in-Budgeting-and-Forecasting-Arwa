@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>REQ-BP2-2 — Local Explanation (LIME)</title>
+<style>
+/* ============================================
+   AI Budget & Forecast — Shared Wireframe CSS
+   Matches original design system exactly
+   ============================================ */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: #F3F4F6; color: #111827; font-size: 14px; }
+
+/* Story bar (fixed top) */
+.story-bar { position: fixed; top: 0; left: 0; right: 0; background: #1F2937; color: #F9FAFB; padding: 10px 24px; z-index: 100; display: flex; align-items: center; gap: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+.story-bar h1 { font-size: 14px; font-weight: 600; }
+.story-bar .req-id { background: #3B82F6; padding: 4px 10px; border-radius: 4px; font-size: 12px; font-weight: 600; }
+.story-bar .view-tag { background: #6366F1; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 600; margin-left: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+.story-bar .view-tag.basic { background: #10B981; }
+.story-bar .view-tag.advanced { background: #F59E0B; }
+.story-bar .view-tag.new { background: #EF4444; }
+
+.toggle-group { display: flex; background: #374151; border-radius: 6px; padding: 2px; margin-left: auto; }
+.toggle-btn { background: transparent; color: #D1D5DB; border: none; padding: 6px 16px; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: 500; }
+.toggle-btn.active { background: #3B82F6; color: white; }
+.toggle-btn.disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* App layout */
+.app { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; padding-top: 56px; }
+
+/* Sidebar with grouped structure */
+.sidebar { background: white; border-right: 1px solid #E5E7EB; padding: 24px 0; height: calc(100vh - 56px); position: sticky; top: 56px; overflow-y: auto; }
+.brand { padding: 0 24px 20px; font-size: 18px; font-weight: 700; color: #111827; line-height: 1.3; border-bottom: 1px solid #F3F4F6; margin-bottom: 12px; }
+.nav-group { margin-top: 16px; }
+.nav-group-label { padding: 4px 24px; font-size: 11px; font-weight: 700; color: #9CA3AF; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; }
+.nav-item { display: flex; align-items: center; gap: 12px; padding: 9px 24px; color: #6B7280; font-size: 13.5px; font-weight: 500; border-left: 3px solid transparent; cursor: pointer; }
+.nav-item:hover { background: #F9FAFB; }
+.nav-item.active { background: #EFF6FF; color: #3B82F6; border-left-color: #3B82F6; }
+.nav-item .badge-new { background: #FEE2E2; color: #DC2626; font-size: 10px; padding: 2px 6px; border-radius: 4px; margin-left: auto; font-weight: 600; }
+.nav-icon { width: 18px; height: 18px; flex-shrink: 0; font-size: 15px; }
+
+/* Main panel */
+.main { display: flex; flex-direction: column; background: #F9FAFB; }
+.header { background: white; border-bottom: 1px solid #E5E7EB; padding: 16px 32px; display: flex; justify-content: space-between; align-items: center; }
+.header-left h2 { font-size: 18px; font-weight: 600; color: #111827; }
+.header-left p { font-size: 13px; color: #6B7280; margin-top: 2px; }
+.header-right { display: flex; align-items: center; gap: 16px; }
+.bell { width: 20px; height: 20px; color: #6B7280; position: relative; cursor: pointer; }
+.bell::after { content: ''; position: absolute; top: 0; right: 0; width: 8px; height: 8px; background: #3B82F6; border-radius: 50%; border: 2px solid white; }
+.user-chip { display: flex; align-items: center; gap: 10px; }
+.avatar { width: 36px; height: 36px; border-radius: 50%; background: #DBEAFE; color: #3B82F6; display: flex; align-items: center; justify-content: center; font-weight: 600; }
+.user-name { font-weight: 600; font-size: 14px; }
+.user-role { font-size: 12px; color: #6B7280; }
+.content { padding: 32px; flex: 1; }
+
+/* Banners */
+.banner { background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 8px; padding: 14px 18px; display: flex; gap: 12px; align-items: flex-start; margin-bottom: 24px; color: #1E40AF; font-size: 14px; }
+.banner-icon { flex-shrink: 0; width: 18px; height: 18px; color: #3B82F6; font-weight: bold; }
+.banner-warn { background: #FFFBEB; border-color: #FDE68A; color: #92400E; }
+.banner-warn .banner-icon { color: #F59E0B; }
+.banner-success { background: #ECFDF5; border-color: #A7F3D0; color: #065F46; }
+.banner-success .banner-icon { color: #10B981; }
+.banner-danger { background: #FEF2F2; border-color: #FECACA; color: #991B1B; }
+.banner-danger .banner-icon { color: #EF4444; }
+
+/* Cards */
+.card { background: white; border: 1px solid #E5E7EB; border-radius: 8px; padding: 24px; margin-bottom: 20px; }
+.card-title { font-size: 16px; font-weight: 600; margin-bottom: 16px; color: #111827; }
+.card-subtitle { font-size: 13px; color: #6B7280; margin-top: -10px; margin-bottom: 16px; }
+
+/* Form fields */
+.field { margin-bottom: 20px; }
+.label { display: block; font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 6px; }
+.label-helper { font-size: 12px; color: #6B7280; font-weight: 400; margin-left: 4px; }
+.req { color: #EF4444; }
+.input, .select, .textarea { width: 100%; padding: 10px 12px; border: 1px solid #D1D5DB; border-radius: 6px; font-size: 14px; font-family: inherit; background: white; }
+.textarea { resize: vertical; min-height: 80px; }
+.input:focus, .select:focus, .textarea:focus { outline: none; border-color: #3B82F6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+.input-help { font-size: 12px; color: #6B7280; margin-top: 6px; }
+
+.tag-input { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px; border: 1px solid #D1D5DB; border-radius: 6px; min-height: 42px; align-items: center; cursor: text; }
+.tag { background: #DBEAFE; color: #1E40AF; padding: 4px 10px; border-radius: 4px; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; }
+.tag-x { cursor: pointer; opacity: 0.6; font-size: 14px; }
+
+.radio-card { border: 2px solid #E5E7EB; border-radius: 8px; padding: 14px 16px; cursor: pointer; margin-bottom: 8px; transition: all 0.15s; }
+.radio-card:hover { border-color: #93C5FD; }
+.radio-card.selected { border-color: #3B82F6; background: #EFF6FF; }
+.radio-card-title { font-weight: 600; font-size: 14px; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
+.radio-card-desc { font-size: 12px; color: #6B7280; }
+
+/* Buttons */
+.btn { padding: 10px 20px; border-radius: 6px; font-size: 14px; font-weight: 500; cursor: pointer; border: none; font-family: inherit; }
+.btn-primary { background: #3B82F6; color: white; }
+.btn-primary:hover { background: #2563EB; }
+.btn-secondary { background: white; color: #374151; border: 1px solid #D1D5DB; }
+.btn-secondary:hover { background: #F9FAFB; }
+.btn-danger { background: white; color: #EF4444; border: 1px solid #FCA5A5; }
+.btn-success { background: #10B981; color: white; }
+.btn-warning { background: #F59E0B; color: white; }
+.btn-disabled { background: #E5E7EB; color: #9CA3AF; cursor: not-allowed; }
+.btn-sm { padding: 6px 12px; font-size: 13px; }
+
+.actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px; padding-top: 20px; border-top: 1px solid #E5E7EB; }
+
+/* Grids */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+.grid-2-3 { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+.grid-3-2 { display: grid; grid-template-columns: 3fr 2fr; gap: 20px; }
+
+/* Pills & badges */
+.pill { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+.pill-info { background: #DBEAFE; color: #1E40AF; }
+.pill-success { background: #D1FAE5; color: #065F46; }
+.pill-warn { background: #FEF3C7; color: #92400E; }
+.pill-danger { background: #FEE2E2; color: #991B1B; }
+.pill-neutral { background: #F3F4F6; color: #4B5563; }
+
+.subtle { color: #6B7280; font-size: 13px; }
+.summary-row { padding: 10px 0; }
+.summary-label { font-size: 12px; color: #6B7280; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 500; }
+.summary-value { font-size: 14px; color: #111827; font-weight: 500; margin-top: 4px; }
+
+/* Steps */
+.step-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid #F3F4F6; }
+.step-row:last-child { border-bottom: none; }
+.step-icon { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; flex-shrink: 0; }
+.step-done { background: #D1FAE5; color: #065F46; }
+.step-active { background: #FEF3C7; color: #92400E; }
+.step-pending { background: #F3F4F6; color: #9CA3AF; }
+.step-label { font-size: 14px; color: #111827; flex: 1; }
+.step-status { font-size: 12px; font-weight: 500; }
+
+.progress-bar { height: 8px; background: #E5E7EB; border-radius: 4px; margin-top: 16px; overflow: hidden; }
+.progress-fill { height: 100%; background: #3B82F6; border-radius: 4px; }
+.progress-text { font-size: 13px; color: #6B7280; margin-top: 8px; text-align: center; }
+
+/* Timeline */
+.timeline-item { display: flex; gap: 12px; padding: 10px 0; }
+.timeline-dot { width: 10px; height: 10px; border-radius: 50%; margin-top: 6px; flex-shrink: 0; }
+.timeline-title { font-size: 14px; font-weight: 500; color: #111827; }
+.timeline-meta { font-size: 12px; color: #6B7280; margin-top: 2px; }
+
+.request-id-box { margin-top: 16px; padding-top: 16px; border-top: 1px solid #F3F4F6; }
+.request-id-value { font-family: 'SF Mono', 'Monaco', monospace; font-weight: 600; margin-top: 4px; color: #111827; }
+
+/* Tables */
+.tbl { width: 100%; border-collapse: collapse; }
+.tbl th { text-align: left; padding: 10px 12px; font-size: 12px; font-weight: 600; color: #6B7280; text-transform: uppercase; letter-spacing: 0.04em; border-bottom: 1px solid #E5E7EB; background: #F9FAFB; }
+.tbl td { padding: 12px; font-size: 14px; border-bottom: 1px solid #F3F4F6; color: #111827; }
+.tbl tr:hover { background: #F9FAFB; }
+.tbl .num { font-family: 'SF Mono', 'Monaco', monospace; font-size: 13px; }
+
+/* Metric cards */
+.metric { padding: 16px; background: white; border: 1px solid #E5E7EB; border-radius: 8px; }
+.metric-label { font-size: 12px; color: #6B7280; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
+.metric-value { font-size: 24px; font-weight: 700; color: #111827; margin-top: 8px; }
+.metric-delta { font-size: 12px; font-weight: 500; margin-top: 4px; }
+.metric-up { color: #10B981; }
+.metric-down { color: #EF4444; }
+
+/* Chart placeholders */
+.chart-placeholder { background: #F9FAFB; border: 1px dashed #D1D5DB; border-radius: 6px; height: 240px; display: flex; align-items: center; justify-content: center; color: #6B7280; font-size: 13px; }
+.chart-placeholder-tall { height: 320px; }
+.chart-placeholder-short { height: 160px; }
+
+/* Bar viz */
+.bar-row { display: flex; align-items: center; gap: 12px; padding: 8px 0; }
+.bar-label { width: 140px; font-size: 13px; color: #374151; flex-shrink: 0; }
+.bar-track { flex: 1; height: 22px; background: #F3F4F6; border-radius: 4px; overflow: hidden; }
+.bar-fill { height: 100%; background: #3B82F6; }
+.bar-fill.green { background: #10B981; }
+.bar-fill.red { background: #EF4444; }
+.bar-fill.amber { background: #F59E0B; }
+.bar-value { width: 70px; text-align: right; font-size: 13px; font-weight: 600; color: #111827; }
+
+/* Advanced toggle indicator */
+.advanced-banner { background: #FEF3C7; border: 1px solid #FDE68A; color: #92400E; padding: 10px 14px; border-radius: 6px; font-size: 13px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+
+/* Checkbox cards */
+.check-row { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid #E5E7EB; border-radius: 6px; margin-bottom: 8px; }
+.check-row.checked { background: #EFF6FF; border-color: #93C5FD; }
+.check-icon { width: 16px; height: 16px; border: 2px solid #D1D5DB; border-radius: 3px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 11px; color: white; }
+.check-row.checked .check-icon { background: #3B82F6; border-color: #3B82F6; }
+
+/* Approver chips */
+.approver-chip { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid #E5E7EB; border-radius: 6px; margin-bottom: 8px; }
+.approver-avatar { width: 32px; height: 32px; border-radius: 50%; background: #DBEAFE; color: #3B82F6; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 12px; flex-shrink: 0; }
+.approver-name { font-weight: 500; font-size: 13.5px; color: #111827; }
+.approver-role { font-size: 12px; color: #6B7280; }
+.approver-status { margin-left: auto; }
+
+/* Screen toggle */
+.screen { display: none; }
+.screen.active { display: block; }
+
+</style>
+</head>
+<body>
+
+<div class="story-bar">
+    <span class="req-id">REQ-BP2-2</span>
+    <h1>Local Explanation of a Specific Prediction — LIME</h1>
+    <span class="view-tag basic">Basic View</span>
+  </div>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">AI Budget &amp;<br>Forecast</div>
+
+    <div class="nav-item"><span class="nav-icon">⊞</span> Dashboard </div>
+
+    <div class="nav-group">
+      <div class="nav-group-label">Forecasting</div>
+      <div class="nav-item"><span class="nav-icon">↗</span> Generate Forecast </div>
+      <div class="nav-item"><span class="nav-icon">∿</span> Spending Patterns </div>
+      <div class="nav-item"><span class="nav-icon">📊</span> Variance Reports </div>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-group-label">Data &amp; Quality</div>
+      <div class="nav-item"><span class="nav-icon">◐</span> Data Quality </div>
+      <div class="nav-item"><span class="nav-icon">⚠</span> Anomaly Detection <span class="badge-new">NEW</span></div>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-group-label">Explainability</div>
+      <div class="nav-item active"><span class="nav-icon">💡</span> Explain Prediction </div>
+      <div class="nav-item"><span class="nav-icon">📑</span> Contextual Reports <span class="badge-new">NEW</span></div>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-group-label">Model Lifecycle</div>
+      <div class="nav-item"><span class="nav-icon">✓</span> Model Validation <span class="badge-new">NEW</span></div>
+      <div class="nav-item"><span class="nav-icon">↻</span> Forecast vs. Actuals <span class="badge-new">NEW</span></div>
+      <div class="nav-item"><span class="nav-icon">🗄</span> Model Management </div>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-item"><span class="nav-icon">⚙</span> Settings </div>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="header">
+    <div class="header-left">
+      <h2>Why This Prediction?</h2>
+      <p>See which factors contributed to a single forecast and by how much</p>
+    </div>
+    <div class="header-right">
+      <span class="bell">🔔</span>
+      <div class="user-chip">
+    <div class="avatar">SA</div>
+    <div>
+      <div class="user-name">Sarah Ahmed</div>
+      <div class="user-role">Budget Manager</div>
+    </div>
+  </div>
+    </div>
+  </div>
+
+    <div class="content">
+      
+<div class="banner">
+  <span class="banner-icon">ⓘ</span>
+  <div>Here's why the AI predicted <strong>$523k for Marketing in Q2 2026</strong>. Each factor below is shown with how much it pushed the prediction up or down.</div>
+</div>
+
+<div class="card">
+  <div class="card-title">Selected Prediction</div>
+  <div class="grid-3">
+    <div class="summary-row">
+      <div class="summary-label">Department</div>
+      <div class="summary-value">Marketing</div>
+    </div>
+    <div class="summary-row">
+      <div class="summary-label">Period</div>
+      <div class="summary-value">Q2 2026</div>
+    </div>
+    <div class="summary-row">
+      <div class="summary-label">Predicted Spend</div>
+      <div class="summary-value" style="font-size: 22px; font-weight: 700; color: #3B82F6;">$523,400</div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-title">What pushed the prediction up</div>
+
+  <div style="padding: 14px; background: #FEF2F2; border-left: 3px solid #EF4444; border-radius: 6px; margin-bottom: 10px;">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <div style="font-weight: 600; font-size: 14px;">📈 Marketing hired 2 people in March</div>
+      <span style="font-weight: 700; color: #EF4444;">+$8,400</span>
+    </div>
+    <div style="font-size: 13px; color: #4B5563; margin-top: 6px;">Higher payroll base increases monthly spend.</div>
+  </div>
+
+  <div style="padding: 14px; background: #FEF2F2; border-left: 3px solid #EF4444; border-radius: 6px; margin-bottom: 10px;">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <div style="font-weight: 600; font-size: 14px;">📈 Ad costs are rising in the market</div>
+      <span style="font-weight: 700; color: #EF4444;">+$6,100</span>
+    </div>
+    <div style="font-size: 13px; color: #4B5563; margin-top: 6px;">Ad Cost Index is up 6.1% this quarter — affects all campaign spending.</div>
+  </div>
+
+  <div style="padding: 14px; background: #FEF2F2; border-left: 3px solid #EF4444; border-radius: 6px; margin-bottom: 10px;">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <div style="font-weight: 600; font-size: 14px;">📈 7 campaigns planned for Q2 launch</div>
+      <span style="font-weight: 700; color: #EF4444;">+$4,800</span>
+    </div>
+    <div style="font-size: 13px; color: #4B5563; margin-top: 6px;">More active campaigns means more vendor and production spend.</div>
+  </div>
+
+  <div style="padding: 14px; background: #FEF2F2; border-left: 3px solid #EF4444; border-radius: 6px;">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <div style="font-weight: 600; font-size: 14px;">📈 General inflation</div>
+      <span style="font-weight: 700; color: #EF4444;">+$2,200</span>
+    </div>
+    <div style="font-size: 13px; color: #4B5563; margin-top: 6px;">CPI up 0.3% this quarter — small but consistent push.</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-title">What pushed the prediction down</div>
+
+  <div style="padding: 14px; background: #ECFDF5; border-left: 3px solid #10B981; border-radius: 6px;">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <div style="font-weight: 600; font-size: 14px;">📉 Favourable USD/EUR exchange rate</div>
+      <span style="font-weight: 700; color: #10B981;">-$1,400</span>
+    </div>
+    <div style="font-size: 13px; color: #4B5563; margin-top: 6px;">Cheaper European vendor services reduce overall cost.</div>
+  </div>
+</div>
+
+<div class="card" style="background: #F9FAFB;">
+  <div class="card-title">📝 In Plain English</div>
+  <div style="font-size: 13.5px; color: #374151; line-height: 1.7;">
+    The forecast for Marketing came out higher mainly because of <strong>new hires</strong>, <strong>rising ad costs</strong>, and the <strong>upcoming product launch campaigns</strong>. A favourable exchange rate offsets some of the increase. None of these are surprises — the model is essentially confirming what the department already plans for Q2.
+  </div>
+</div>
+
+<div class="actions">
+  <button class="btn btn-secondary">Pick a Different Prediction</button>
+  <button class="btn btn-secondary">View Contextual Reports</button>
+  <button class="btn btn-primary">See Global Drivers (SHAP) →</button>
+</div>
+
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
