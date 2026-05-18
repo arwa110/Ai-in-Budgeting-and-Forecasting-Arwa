@@ -37,7 +37,7 @@ Contains the features report documenting the system design including business pr
 Contains the Google Colab notebook (.ipynb) that demonstrates the AI and XAI pipeline. The notebook applies three classification models (Logistic Regression, Random Forest, XGBoost) on the NYC Capital Construction Budget dataset, then uses SHAP for global feature importance and LIME for local prediction explanations.
 
 ### wireframes/
-Contains the HTML source files for the wireframe prototypes built using Lovable, covering both the original wireframes (20 screens) and the updated wireframes after expert evaluation (18 screens).
+Contains the HTML source files for the wireframe prototypes built using Lovable, covering both the original wireframes 10 links each one contains input and output screens  (20 screens) and the updated wireframes after expert evaluation (18 screens).
 
 ## Setup & How to Run
 
